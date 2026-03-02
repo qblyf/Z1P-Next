@@ -345,7 +345,17 @@ export default function SPUEdit(props: { defaultTab?: string }) {
                           await editSPUInfo(spuID, params, { auth: token });
 
                           // 请求成功后 按需修改本组件数据
-                          const newData = { ...preData, ...input };
+                          // 需要深度合并 images 对象，避免覆盖未修改的字段
+                          const newData = {
+                            ...preData,
+                            ...input,
+                            ...(input.images ? {
+                              images: {
+                                ...preData.images,
+                                ...input.images,
+                              },
+                            } : {}),
+                          };
                           setPreData(newData);
 
                           // 请求成功后 初始化用户输入数据
@@ -463,7 +473,15 @@ export default function SPUEdit(props: { defaultTab?: string }) {
                         await editSPUInfo(spuID, params, { auth: token });
 
                         // 请求成功后 按需修改本组件数据
-                        const newData = { ...preData, ...input };
+                        // 需要深度合并 images 对象，避免覆盖未修改的字段
+                        const newData = {
+                          ...preData,
+                          ...input,
+                          images: {
+                            ...preData.images,
+                            ...input.images,
+                          },
+                        };
                         setPreData(newData);
 
                         // 请求成功后 初始化用户输入数据
