@@ -431,15 +431,23 @@ export default function SPUEdit(props: { defaultTab?: string }) {
                         }
                         const params: Parameters<EditSPUInfo>[1] = {
                           images: {
-                            thumbnail: input.images.thumbnail
-                              ? (input.images.thumbnail.url || '')
-                              : '',
-                            mainImages: (input.images.mainImages || [])
-                              .map(img => img.url || '')
-                              .filter(url => Boolean(url)),
-                            detailsImages: (input.images.detailsImages || [])
-                              .map(img => img.url || '')
-                              .filter(url => Boolean(url)),
+                            thumbnail: input.images.thumbnail !== undefined
+                              ? (input.images.thumbnail?.url || '')
+                              : (preData.images.thumbnail?.url || ''),
+                            mainImages: input.images.mainImages !== undefined
+                              ? (input.images.mainImages || [])
+                                  .map(img => img.url || '')
+                                  .filter(url => Boolean(url))
+                              : (preData.images.mainImages || [])
+                                  .map(img => img.url || '')
+                                  .filter(url => Boolean(url)),
+                            detailsImages: input.images.detailsImages !== undefined
+                              ? (input.images.detailsImages || [])
+                                  .map(img => img.url || '')
+                                  .filter(url => Boolean(url))
+                              : (preData.images.detailsImages || [])
+                                  .map(img => img.url || '')
+                                  .filter(url => Boolean(url)),
                           },
                         };
 
