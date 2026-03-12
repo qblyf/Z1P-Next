@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { Z1P_ENDPOINT } from '../../../constants';
 
 // 标记为动态路由，因为需要读取 request.url
 export const dynamic = 'force-dynamic';
@@ -27,8 +28,13 @@ export async function GET(request: Request) {
     }
     
     // 从 SDK 获取所有账套信息
+    // 注意：在 API 路由中，SDK 可能需要显式传递 endpoint
     const { getSysSettings } = await import('@zsqk/z1-sdk/es/z1p/sys-setting');
-    const sysSettings = await getSysSettings({ auth: token });
+    const sysSettings = await getSysSettings({ 
+      auth: token,
+      // @ts-ignore - SDK 类型定义可能不完整，但运行时需要 endpoint
+      endpoint: Z1P_ENDPOINT 
+    });
     
     console.log(`✅ 成功从 SDK 获取 ${sysSettings.length} 个账套`);
     
