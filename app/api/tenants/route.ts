@@ -4,9 +4,14 @@ import { NextResponse } from 'next/server';
 export const dynamic = 'force-dynamic';
 
 // 在 API 路由中直接获取 endpoint
-// Next.js API 路由运行在服务端，NEXT_PUBLIC_ 变量可能不可用
+// Next.js API 路由运行在服务端，需要确保 endpoint 有值
 const getEndpoint = () => {
-  return process.env.NEXT_PUBLIC_Z1P_ENDPOINT || 'https://p-api.z1.pub';
+  const endpoint = process.env.NEXT_PUBLIC_Z1P_ENDPOINT || 'https://p-api.z1.pub';
+  console.log('🔍 getEndpoint 调用:', {
+    env: process.env.NEXT_PUBLIC_Z1P_ENDPOINT,
+    result: endpoint
+  });
+  return endpoint;
 };
 
 /**
