@@ -317,7 +317,7 @@ function ClientPage() {
         <Row gutter={[16, 16]}>
           {/* 左侧：同步控制和进度 */}
           <Col xs={24} lg={10}>
-            <Card title="同步控制" size="small" style={{ height: '100%' }}>
+            <Card title="同步控制" size="small">
               <Descriptions size="small" column={1}>
                 <Descriptions.Item label="同步数据">
                   <Tag color="blue">SPU 分类</Tag>
@@ -336,54 +336,6 @@ function ClientPage() {
                   <span style={{ color: '#fa8c16' }}>⚠️</span> 同步时会锁表，请在数据修改完成后进行
                 </Descriptions.Item>
               </Descriptions>
-              
-              {/* 账套选择区域 */}
-              <Divider orientation="left" style={{ margin: '16px 0 12px' }}>
-                <span style={{ fontSize: '13px', fontWeight: 500 }}>选择同步账套</span>
-              </Divider>
-              
-              <div style={{ 
-                maxHeight: '200px', 
-                overflow: 'auto', 
-                border: '1px solid #f0f0f0',
-                borderRadius: '4px',
-                padding: '8px',
-                background: '#fafafa'
-              }}>
-                <Checkbox
-                  checked={selectAll}
-                  indeterminate={selectedTenants.length > 0 && selectedTenants.length < tenantList.length}
-                  onChange={(e) => handleSelectAll(e.target.checked)}
-                  style={{ 
-                    marginBottom: '8px', 
-                    fontWeight: 500,
-                    display: 'block',
-                    padding: '4px 8px',
-                    background: 'white',
-                    borderRadius: '4px'
-                  }}
-                >
-                  全选 ({tenantList.length} 个账套)
-                </Checkbox>
-                <Divider style={{ margin: '8px 0' }} />
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '4px' }}>
-                  {tenantList.map(tenant => (
-                    <Checkbox
-                      key={tenant.id}
-                      checked={selectedTenants.includes(tenant.id)}
-                      onChange={(e) => handleTenantSelect(tenant.id, e.target.checked)}
-                      style={{ 
-                        padding: '4px 8px',
-                        background: 'white',
-                        borderRadius: '4px',
-                        fontSize: '12px'
-                      }}
-                    >
-                      {tenant.name}
-                    </Checkbox>
-                  ))}
-                </div>
-              </div>
               
               <div style={{ marginTop: 16 }}>
                 <Button 
@@ -458,21 +410,18 @@ function ClientPage() {
             </Card>
           </Col>
 
-          {/* 右侧：账套同步状态 */}
+          {/* 右侧：账套选择与同步状态 */}
           <Col xs={24} lg={14}>
             <Card 
               title={
                 <Space>
-                  <span>账套同步状态</span>
-                  {Object.keys(tenantSyncStatus).length > 0 && (
-                    <span style={{ fontSize: '12px', color: '#666' }}>
-                      ({Object.keys(tenantSyncStatus).length} 个账套)
-                    </span>
-                  )}
+                  <span>账套选择与同步状态</span>
+                  <span style={{ fontSize: '12px', color: '#666' }}>
+                    ({tenantList.length} 个账套)
+                  </span>
                 </Space>
               }
               size="small"
-              style={{ height: '100%' }}
               extra={
                 Object.keys(tenantSyncStatus).length > 0 && (
                   <Space size="small">
@@ -484,90 +433,116 @@ function ClientPage() {
                 )
               }
             >
-              {Object.keys(tenantSyncStatus).length === 0 ? (
-                <div style={{ 
-                  textAlign: 'center', 
-                  padding: '60px 20px', 
-                  color: '#999',
-                  background: '#fafafa',
-                  borderRadius: '6px',
-                  border: '1px dashed #d9d9d9'
-                }}>
-                  <DatabaseOutlined style={{ fontSize: '32px', marginBottom: '12px', color: '#d9d9d9' }} />
-                  <div>点击"开始数据同步"查看各账套同步状态</div>
-                </div>
-              ) : (
-                <div style={{ maxHeight: '450px', overflow: 'auto' }}>
-                  <List
-                    size="small"
-                    dataSource={Object.entries(tenantSyncStatus)}
-                    renderItem={([tenantId, status]) => {
-                      const duration = status.startTime && status.endTime 
-                        ? `${((status.endTime - status.startTime) / 1000).toFixed(1)}s`
-                        : status.startTime 
-                        ? `${((Date.now() - status.startTime) / 1000).toFixed(1)}s`
-                        : '';
+              <div style={{ marginBottom: 12 }}>
+                <Checkbox
+                  checked={selectAll}
+                  indeterminate={selectedTenants.length > 0 && selectedTenants.length < tenantList.length}
+                  onChange={(e) => handleSelectAll(e.target.checked)}
+                  disabled={disabled}
+                  style={{ fontWeight: 500 }}
+                >
+                  全选 ({selectedTenants.length}/{tenantList.length})
+                </Checkbox>
+              </div>
+              
+              <div style={{ maxHeight: '500px', overflow: 'auto' }}>
+                <List
+                  size="small"
+                  dataSource={tenantList}
+                  renderItem={(tenant) => {
+                    const isSelected = selectedTenants.includes(tenant.id);
+                    const status = tenantSyncStatus[tenant.id];
+                    const duration = status?.startTime && status?.endTime 
+                      ? `${((status.endTime - status.startTime) / 1000).toFixed(1)}s`
+                      : status?.startTime 
+                      ? `${((Date.now() - status.startTime) / 1000).toFixed(1)}s`
+                      : '';
 
-                      return (
-                        <List.Item style={{ 
-                          padding: '8px 0',
-                          borderBottom: '1px solid #f0f0f0'
-                        }}>
-                          <List.Item.Meta
-                            avatar={
-                              <Avatar 
-                                size="small"
-                                style={{
-                                  backgroundColor: 
-                                    status.status === 'success' ? '#52c41a' :
-                                    status.status === 'error' ? '#ff4d4f' :
-                                    status.status === 'syncing' ? '#1890ff' : '#d9d9d9'
-                                }}
-                                icon={
-                                  status.status === 'success' ? <CheckCircleOutlined /> :
-                                  status.status === 'error' ? <ExclamationCircleOutlined /> :
-                                  status.status === 'syncing' ? <SyncOutlined spin /> :
-                                  <ClockCircleOutlined />
-                                }
-                              />
-                            }
-                            title={
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontWeight: 500 }}>
-                                  {tenantNameMap[tenantId] || tenantId}
-                                </span>
-                                {duration && (
-                                  <span style={{ 
-                                    fontSize: '11px', 
-                                    color: '#1890ff', 
-                                    background: '#e6f7ff',
-                                    padding: '2px 6px',
-                                    borderRadius: '10px'
-                                  }}>
-                                    {duration}
-                                  </span>
-                                )}
-                              </div>
-                            }
-                            description={
-                              <span style={{
+                    return (
+                      <List.Item 
+                        style={{ 
+                          padding: '10px 12px',
+                          borderBottom: '1px solid #f0f0f0',
+                          background: isSelected ? '#f6ffed' : 'transparent',
+                          transition: 'all 0.3s',
+                          borderLeft: isSelected ? '3px solid #52c41a' : '3px solid transparent'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', width: '100%', gap: '12px' }}>
+                          {/* 选择框 */}
+                          <Checkbox
+                            checked={isSelected}
+                            onChange={(e) => handleTenantSelect(tenant.id, e.target.checked)}
+                            disabled={disabled}
+                          />
+                          
+                          {/* 状态图标 */}
+                          {status ? (
+                            <Avatar 
+                              size="small"
+                              style={{
+                                backgroundColor: 
+                                  status.status === 'success' ? '#52c41a' :
+                                  status.status === 'error' ? '#ff4d4f' :
+                                  status.status === 'syncing' ? '#1890ff' : '#d9d9d9',
+                                flexShrink: 0
+                              }}
+                              icon={
+                                status.status === 'success' ? <CheckCircleOutlined /> :
+                                status.status === 'error' ? <ExclamationCircleOutlined /> :
+                                status.status === 'syncing' ? <SyncOutlined spin /> :
+                                <ClockCircleOutlined />
+                              }
+                            />
+                          ) : (
+                            <div style={{ width: 24, flexShrink: 0 }} />
+                          )}
+                          
+                          {/* 账套信息 */}
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ 
+                              fontWeight: 500, 
+                              fontSize: '13px',
+                              marginBottom: status ? '4px' : 0
+                            }}>
+                              {tenant.name}
+                            </div>
+                            {status && (
+                              <div style={{
                                 color: status.status === 'error' ? '#ff4d4f' : '#666',
-                                fontSize: '12px'
+                                fontSize: '12px',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap'
                               }}>
                                 {status.message || 
                                   (status.status === 'waiting' ? '等待同步' :
                                    status.status === 'syncing' ? '正在同步数据...' :
                                    status.status === 'success' ? '同步成功' : '同步失败')
                                 }
-                              </span>
-                            }
-                          />
-                        </List.Item>
-                      );
-                    }}
-                  />
-                </div>
-              )}
+                              </div>
+                            )}
+                          </div>
+                          
+                          {/* 耗时标签 */}
+                          {duration && (
+                            <span style={{ 
+                              fontSize: '11px', 
+                              color: '#1890ff', 
+                              background: '#e6f7ff',
+                              padding: '2px 8px',
+                              borderRadius: '10px',
+                              flexShrink: 0
+                            }}>
+                              {duration}
+                            </span>
+                          )}
+                        </div>
+                      </List.Item>
+                    );
+                  }}
+                />
+              </div>
             </Card>
           </Col>
         </Row>
