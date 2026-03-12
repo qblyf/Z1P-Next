@@ -168,7 +168,7 @@ export default function TenantManagePage() {
           <strong>{name}</strong>
           {record.remarks && (
             <Tooltip title={record.remarks}>
-              <Tag size="small">备注</Tag>
+              <Tag>备注</Tag>
             </Tooltip>
           )}
         </Space>
@@ -246,7 +246,7 @@ export default function TenantManagePage() {
     }
   ];
   return (
-    <PageWrap ppKey="tenant-manage">
+    <PageWrap ppKey="product-manage">
       <PageHeader
         title="账套管理"
         subTitle="管理所有Z1平台账套配置"
