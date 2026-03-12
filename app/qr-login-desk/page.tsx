@@ -247,14 +247,22 @@ function QrLoginDeskPage() {
 
             {scanner && !isTimeout && (
               <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4 mb-4">
-                <div className="flex items-center justify-center mb-2">
+                <div className="flex items-center justify-center mb-3">
                   <div className="w-2 h-2 bg-emerald-600 rounded-full animate-pulse mr-2"></div>
                   <p className="text-emerald-800 text-sm font-medium">
                     {scanner} 已扫码
                   </p>
                 </div>
-                <p className="text-emerald-700 text-xs">
-                  请在移动设备上确认登录
+                <div className="bg-white rounded-lg p-3 mb-2">
+                  <p className="text-emerald-700 text-sm font-medium mb-1">
+                    ✓ 扫码成功
+                  </p>
+                  <p className="text-slate-600 text-xs">
+                    请在手机上点击"确认登录"按钮
+                  </p>
+                </div>
+                <p className="text-emerald-600 text-xs">
+                  首次登录可能需要几秒钟进行身份验证
                 </p>
               </div>
             )}
@@ -264,8 +272,16 @@ function QrLoginDeskPage() {
                 <p className="text-amber-800 text-sm font-medium mb-2">
                   ⚠️ 登录提示
                 </p>
-                <p className="text-amber-700 text-xs">
-                  请使用钉钉扫码登录。如果您使用的是其他应用（如微信、浏览器等），请切换到钉钉应用进行扫码。
+                <p className="text-amber-700 text-xs mb-2">
+                  检测到登录时间较长，这可能是因为：
+                </p>
+                <ul className="text-amber-700 text-xs text-left list-disc list-inside space-y-1">
+                  <li>首次登录需要进行身份验证</li>
+                  <li>网络连接较慢</li>
+                  <li>未使用钉钉应用扫码</li>
+                </ul>
+                <p className="text-amber-700 text-xs mt-2">
+                  请确保使用钉钉应用扫码，并在手机上完成确认。
                 </p>
               </div>
             )}

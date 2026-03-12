@@ -31,28 +31,12 @@ import {
 import { PageHeader } from '@ant-design/pro-components';
 import { Content } from '../../components/style/Content';
 import PageWrap from '../../components/PageWrap';
-
-// 账套状态枚举
-const TENANT_STATES = {
-  valid: { label: '有效', color: 'success' },
-  invalid: { label: '无效', color: 'error' },
-  maintenance: { label: '维护中', color: 'warning' },
-  testing: { label: '测试', color: 'processing' }
-} as const;
-
-// 账套类型定义（基于z1clients.example.ts）
-interface TenantConfig {
-  id: string;
-  s1ClientID?: string;
-  name: string;
-  domain: string;
-  state: keyof typeof TENANT_STATES;
-  remarks?: string;
-  lastSyncAt: number;
-  dbURI?: string;
-  dbURIPublic?: string;
-  // 其他配置字段...
-}
+import { 
+  getTenantConfigs, 
+  TENANT_STATES, 
+  type TenantConfig 
+} from '../../utils/tenantConfig';
+import { useTokenContext } from '../../datahooks/auth';
 
 export default function TenantManagePage() {
   const [tenants, setTenants] = useState<TenantConfig[]>([]);
@@ -62,33 +46,37 @@ export default function TenantManagePage() {
   const [viewModalVisible, setViewModalVisible] = useState(false);
   const [viewingTenant, setViewingTenant] = useState<TenantConfig | null>(null);
   const [form] = Form.useForm();
+  
+  // 获取用户 token
+  const { token } = useTokenContext();
 
-  // 模拟数据加载
+  // 数据加载 - 依赖 token
   useEffect(() => {
     loadTenants();
-  }, []);
+  }, [token]);
 
   const loadTenants = async () => {
     setLoading(true);
     try {
-      // 这里应该从实际的配置文件或API加载数据
-      // 暂时使用模拟数据
-      const mockTenants: TenantConfig[] = [
-        {
-          id: 'newgy',
-          s1ClientID: 'newgy',
-          name: '高远控股',
-          domain: 'new-pwa.gaoyuansj.com',
-          state: 'valid',
-          remarks: '曾用于"高远专卖"',
-          lastSyncAt: Date.now() - 3600000,
-          dbURI: 'mongodb://...',
-          dbURIPublic: 'mongodb://...'
-        }
-      ];
-      setTenants(mockTenants);
+      // 优先从 SDK API 加载所有账套信息（如果有 token）
+      const apiUrl = token 
+        ? `/api/tenants?token=${encodeURIComponent(token)}`
+        : '/api/tenants';
+      
+      const response = await fetch(apiUrl);
+      const result = await response.json();
+      
+      if (result.success && result.data) {
+        setTenants(result.data);
+        console.log(`成功加载 ${result.total} 个账套 (来源: ${result.source || 'unknown'})`);
+      } else {
+        throw new Error(result.message || '加载失败');
+      }
     } catch (error) {
       console.error('加载账套失败:', error);
+      // 如果 API 失败，使用本地配置作为后备
+      const configs = await getTenantConfigs();
+      setTenants(configs);
     } finally {
       setLoading(false);
     }

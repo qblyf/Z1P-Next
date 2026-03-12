@@ -943,7 +943,6 @@ export default function () {
                     orderBy: [
                       { key: 'p."brand"', sort: 'ASC' },
                       { key: 'p."cate_id"', sort: 'ASC' },
-                      { key: 'p."order"', sort: 'ASC' },
                       { key: 'p."id"', sort: 'DESC' },
                     ],
                     limit: 10000,

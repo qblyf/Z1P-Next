@@ -68,20 +68,12 @@ export const DEFAULT_TENANT_IDS = [
 
 /**
  * 获取账套配置
- * 尝试从实际配置文件读取，失败则返回默认配置
+ * 注意：此函数已废弃，建议直接使用 getSysSettings SDK
+ * 返回默认配置仅用于向后兼容
  */
 export async function getTenantConfigs(): Promise<TenantConfig[]> {
-  try {
-    // 尝试从实际配置文件读取
-    // const { z1ClientsObj } = await import('../../z1clients');
-    // return Object.values(z1ClientsObj).filter(Boolean);
-    
-    // 暂时返回模拟数据
-    return getDefaultTenantConfigs();
-  } catch (error) {
-    console.warn('无法读取z1clients.ts配置文件，使用默认配置:', error);
-    return getDefaultTenantConfigs();
-  }
+  console.warn('getTenantConfigs 已废弃，建议使用 getSysSettings SDK');
+  return getDefaultTenantConfigs();
 }
 
 /**

@@ -6,6 +6,7 @@ import {
   syncProductSingle
 } from '@zsqk/z1-sdk/es/z1p/sync-data';
 import { addSyncLogWithData } from '@zsqk/z1-sdk/es/z1p/sync-log';
+import { getSysSettings } from '@zsqk/z1-sdk/es/z1p/sys-setting';
 
 import { Button, Descriptions, Table, Progress, Space, Card, Row, Col, Tag, Steps, List, Avatar, Spin, Alert } from 'antd';
 import { CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, SyncOutlined, DatabaseOutlined } from '@ant-design/icons';
@@ -13,10 +14,7 @@ import { PageHeader } from '@ant-design/pro-components';
 import { Suspense, useMemo, useState, useEffect } from 'react';
 import { Content } from '../../components/style/Content';
 import PageWrap from '../../components/PageWrap';
-import { getTenantConfigs, getTenantName, DEFAULT_TENANT_IDS } from '../../utils/tenantConfig';
-
-// 账套配置 - 从配置工具中获取
-const ALL_TENANT_IDS = DEFAULT_TENANT_IDS;
+import { useTokenContext } from '../../datahooks/auth';
 
 export default function () {
   return (
@@ -42,6 +40,7 @@ export default function () {
  * @author Lian Zheren <lzr@go0356.com>
  */
 function ClientPage() {
+  const { token } = useTokenContext();
   const [msg, setMsg] = useState('');
   const [currentStep, setCurrentStep] = useState('');
   const [progress, setProgress] = useState(0);
@@ -61,10 +60,43 @@ function ClientPage() {
     }>
   >();
   const [disabled, setDisabled] = useState(false);
+  
+  // 账套列表和名称映射
+  const [tenantList, setTenantList] = useState<Array<{ id: string; name: string }>>([]);
+  const [tenantNameMap, setTenantNameMap] = useState<Record<string, string>>({});
+
+  // 获取账套列表
+  useEffect(() => {
+    if (!token) return;
+    
+    getSysSettings({ auth: token })
+      .then(res => {
+        const tenants = res.map(v => ({
+          id: v.clientName, // 使用 clientName 作为 tenantID
+          name: v.clientName
+        }));
+        setTenantList(tenants);
+        
+        // 创建名称映射
+        const nameMap: Record<string, string> = {};
+        tenants.forEach(t => {
+          nameMap[t.id] = t.name;
+        });
+        setTenantNameMap(nameMap);
+      })
+      .catch(err => {
+        console.error('获取账套列表失败:', err);
+      });
+  }, [token]);
 
   const fn = useMemo(() => {
     console.log('SyncButton init');
     return async () => {
+      if (tenantList.length === 0) {
+        setMsg('账套列表为空，请稍后重试');
+        return;
+      }
+
       setDisabled(true);
       setProductSyncInfo(undefined);
       setProgress(0);
@@ -100,16 +132,8 @@ function ClientPage() {
         setProgress(40);
         const logID = await addSyncLogWithData({ syncDataID, data });
         
-        // 步骤4: 获取需要同步的账套列表
-        // 使用完整的账套列表
-        const syncClientLogIDs = syncDataResult.syncClientLogIDs || [];
-        
-        // 如果SDK返回了具体的客户端日志ID，使用对应数量的账套
-        // 否则使用所有配置的账套
-        const tenantIDs = syncClientLogIDs.length > 0 
-          ? ALL_TENANT_IDS.slice(0, syncClientLogIDs.length)
-          : ALL_TENANT_IDS;
-          
+        // 步骤4: 使用从 getSysSettings 获取的账套列表
+        const tenantIDs = tenantList.map(t => t.id);
         console.log(`准备同步 ${tenantIDs.length} 个账套:`, tenantIDs);
         
         // 初始化账套状态
@@ -132,9 +156,10 @@ function ClientPage() {
         // 步骤5: 循环调用 syncProductSingle 向各账套写数据
         for (let i = 0; i < totalSets; i++) {
           const tenantID = tenantIDs[i];
+          const tenantName = tenantNameMap[tenantID] || tenantID;
           const currentProgress = 40 + Math.floor((i / totalSets) * 50);
           setProgress(currentProgress);
-          setCurrentStep(`正在同步账套 ${getTenantName(tenantID)} (${i + 1}/${totalSets})...`);
+          setCurrentStep(`正在同步账套 ${tenantName} (${i + 1}/${totalSets})...`);
           
           // 更新当前账套状态为同步中
           setTenantSyncStatus(prev => ({
@@ -165,7 +190,7 @@ function ClientPage() {
             }));
             
             syncResults.push({
-              name: getTenantName(tenantID),
+              name: tenantName,
               resCode: result.resCode === 'complete' ? '已成功' : '失败',
               status: '已完成',
               errMsg: result.errMsg || '',
@@ -184,7 +209,7 @@ function ClientPage() {
             }));
             
             syncResults.push({
-              name: getTenantName(tenantID),
+              name: tenantName,
               resCode: '失败',
               status: '已完成',
               errMsg: errorMsg,
@@ -210,7 +235,7 @@ function ClientPage() {
         setDisabled(false);
       }
     };
-  }, []);
+  }, [tenantList, tenantNameMap]);
 
   // 同步步骤配置
   const syncSteps = [
@@ -270,7 +295,7 @@ function ClientPage() {
                   <Tag color="orange">SKU</Tag>
                 </Descriptions.Item>
                 <Descriptions.Item label="账套数量">
-                  <strong>{ALL_TENANT_IDS.length}</strong> 个账套
+                  <strong>{tenantList.length}</strong> 个账套
                 </Descriptions.Item>
                 <Descriptions.Item label="注意事项">
                   <span style={{ color: '#fa8c16' }}>⚠️</span> 同步时会锁表，请在数据修改完成后进行
@@ -416,7 +441,7 @@ function ClientPage() {
                             title={
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span style={{ fontWeight: 500 }}>
-                                  {getTenantName(tenantId)}
+                                  {tenantNameMap[tenantId] || tenantId}
                                 </span>
                                 {duration && (
                                   <span style={{ 
