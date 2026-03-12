@@ -94,6 +94,7 @@ export function postAwait<T extends (...args: any[]) => Promise<any>>(
     timeoutThreshold = repeatClickIntervalTime,
     confirmText = '确认要执行这一请求吗?',
     successText = '请求处理成功.',
+    showSuccess = true,
   }: {
     /** 超时时间, 默认为 repeatClickIntervalTime */
     timeoutThreshold?: number;
@@ -101,6 +102,8 @@ export function postAwait<T extends (...args: any[]) => Promise<any>>(
     confirmText?: string;
     /** 执行成功后的文字 */
     successText?: string;
+    /** 是否显示成功提示，默认为 true */
+    showSuccess?: boolean;
   } = {}
 ) {
   return async (...rest: Parameters<T>): Promise<void> => {
@@ -135,14 +138,12 @@ export function postAwait<T extends (...args: any[]) => Promise<any>>(
               }, timeoutThreshold);
             }),
           ]);
-          m.update({
-            title: '完成',
-            content: successText,
-            icon: <CheckCircleTwoTone twoToneColor="#52c41a" />,
-            keyboard: true,
-            okButtonProps: { style: { display: 'none' } },
-          });
-          await wait(successInfoStayTime);
+          // 关闭 Modal
+          m.destroy();
+          // 使用非阻塞的 message 提示
+          if (showSuccess) {
+            message.success(successText);
+          }
         } catch (err) {
           if (stop) {
             // 超时错误
