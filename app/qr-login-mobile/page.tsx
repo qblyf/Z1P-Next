@@ -36,6 +36,7 @@ function QrLoginMobilePage() {
   const [showDingtalkWarning, setShowDingtalkWarning] = useState(false);
   const [token, setToken] = useState<string | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
+  const [countdown, setCountdown] = useState(5); // 倒计时5秒
 
   useEffect(() => {
     if (typeof storage !== 'string') {
@@ -52,6 +53,19 @@ function QrLoginMobilePage() {
       // 如果不是钉钉环境，显示警告
       setShowDingtalkWarning(true);
     }
+
+    // 启动倒计时
+    const timer = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(timer);
   }, [storage]);
 
   // 当有 storage 参数时（扫码进来），使用 contextToken；否则等待自动登录
@@ -62,8 +76,13 @@ function QrLoginMobilePage() {
         // contextToken 已经初始化完成（可能是 null 或有效 token）
         if (contextToken) {
           setToken(contextToken);
+          setIsInitialized(true);
+        } else if (contextToken === null && errMsg) {
+          // 只有在倒计时结束后才显示错误
+          if (countdown === 0) {
+            setIsInitialized(true);
+          }
         }
-        setIsInitialized(true);
       }
       // 如果 contextToken 还是 undefined，继续等待
     } else {
@@ -77,7 +96,7 @@ function QrLoginMobilePage() {
       }
       setIsInitialized(true);
     }
-  }, [contextToken, storage, router]);
+  }, [contextToken, storage, router, errMsg, countdown]);
 
   // 抛错, 不是有效的参数
   if (typeof storage !== 'string') {
@@ -98,19 +117,37 @@ function QrLoginMobilePage() {
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-cyan-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md text-center shadow-lg">
           <AlertCircle size={48} className="mx-auto text-amber-500 mb-4" />
-          <h2 className="text-lg font-bold text-slate-800 mb-2">需要钉钉登录</h2>
+          <h2 className="text-lg font-bold text-slate-800 mb-2">登录遇到问题</h2>
           <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-4">
             <p className="text-amber-800 text-sm font-medium mb-2">
-              ⚠️ 重要提示
+              ⚠️ 可能的原因
             </p>
             <p className="text-amber-700 text-xs mb-2">
-              本系统仅支持钉钉登录。请使用钉钉应用扫描二维码。
+              1. 请确认您使用的是钉钉应用扫描二维码
+            </p>
+            <p className="text-amber-700 text-xs mb-2">
+              2. 请检查钉钉应用是否有访问权限
             </p>
             <p className="text-amber-700 text-xs">
-              如果您使用的是微信、浏览器等其他应用扫码，将无法完成登录。
+              3. 如果问题持续，请尝试重新扫码
             </p>
           </div>
           <p className="text-slate-500 text-xs mt-4">错误信息: {errMsg}</p>
+          <Button
+            type="primary"
+            size="large"
+            className="w-full h-12 text-base font-medium mt-4"
+            style={{ 
+              backgroundColor: '#059669',
+              borderColor: '#059669',
+            }}
+            onClick={() => {
+              // 清除错误状态，重新尝试
+              window.location.reload();
+            }}
+          >
+            重新尝试
+          </Button>
         </Card>
       </div>
     );
@@ -134,8 +171,36 @@ function QrLoginMobilePage() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-cyan-50 flex items-center justify-center p-4">
         <Card className="w-full max-w-md text-center shadow-lg">
-          <Spin size="large" />
-          <p className="mt-4 text-slate-600">正在初始化...</p>
+          <div className="mb-4">
+            <Spin size="large" />
+          </div>
+          <h2 className="text-lg font-bold text-slate-800 mb-2">正在通过钉钉登录</h2>
+          <p className="text-slate-600 text-sm mb-4">请稍候，系统正在验证您的身份...</p>
+          
+          {countdown > 0 && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+              <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-emerald-600 rounded-full animate-pulse"></div>
+                <span className="text-emerald-800 text-sm font-medium">
+                  自动登录中
+                </span>
+              </div>
+              <div className="text-emerald-600 text-2xl font-bold mb-1">
+                {countdown}
+              </div>
+              <p className="text-emerald-700 text-xs">
+                首次登录需要几秒钟时间
+              </p>
+            </div>
+          )}
+          
+          {countdown === 0 && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <p className="text-blue-800 text-sm">
+                登录时间稍长，请继续等待...
+              </p>
+            </div>
+          )}
         </Card>
       </div>
     );
