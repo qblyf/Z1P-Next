@@ -6,7 +6,6 @@ import {
   syncProductSingle
 } from '@zsqk/z1-sdk/es/z1p/sync-data';
 import { addSyncLogWithData } from '@zsqk/z1-sdk/es/z1p/sync-log';
-import { getSysSettings } from '@zsqk/z1-sdk/es/z1p/sys-setting';
 
 import { Button, Descriptions, Table, Progress, Space, Card, Row, Col, Tag, Steps, List, Avatar, Spin, Alert, Checkbox, Divider } from 'antd';
 import { CheckCircleOutlined, ClockCircleOutlined, ExclamationCircleOutlined, SyncOutlined, DatabaseOutlined } from '@ant-design/icons';
@@ -99,21 +98,40 @@ function ClientPage() {
   useEffect(() => {
     if (!token) return;
     
-    getSysSettings({ auth: token })
-      .then(res => {
-        console.log('getSysSettings 返回数据:', res);
+    // 使用 API 路由获取账套列表，避免直接调用有问题的 SDK
+    fetch(`/api/tenants?token=${encodeURIComponent(token)}`)
+      .then(res => res.json())
+      .then(result => {
+        if (!result.success) {
+          throw new Error(result.message || '获取账套列表失败');
+        }
         
-        const tenants = res.map(v => {
-          const tenantID = clientNameToTenantID[v.clientName];
+        console.log('获取账套列表:', result.data);
+        if (result.warning) {
+          console.warn('API 警告:', result.warning);
+          setMsg('提示：使用备用账套列表');
+        }
+        
+        const tenants = result.data.map((v: any) => {
+          // 从 remarks 中提取 tenantID，或使用映射表
+          let tenantID = clientNameToTenantID[v.name];
+          
+          // 如果 remarks 中包含 tenantID 信息，优先使用
+          if (v.remarks && v.remarks.includes('tenantID:')) {
+            const match = v.remarks.match(/tenantID:\s*(\S+)/);
+            if (match) {
+              tenantID = match[1];
+            }
+          }
           
           if (!tenantID) {
-            console.warn(`未找到 clientName "${v.clientName}" 对应的 tenantID，请更新映射表`);
+            console.warn(`未找到 clientName "${v.name}" 对应的 tenantID，请更新映射表`);
           }
           
           return {
-            id: tenantID || v.clientName,
-            tenantID: tenantID || v.clientName,
-            clientName: v.clientName,
+            id: tenantID || v.name,
+            tenantID: tenantID || v.name,
+            clientName: v.name,
             remarks: v.remarks
           };
         });
@@ -140,6 +158,26 @@ function ClientPage() {
       })
       .catch(err => {
         console.error('获取账套列表失败:', err);
+        setMsg(`获取账套列表失败: ${err.message}`);
+        
+        // 最后的后备方案：使用硬编码的账套列表
+        console.warn('使用硬编码账套列表作为最后的后备方案');
+        const fallbackTenants = Object.entries(clientNameToTenantID).map(([clientName, tenantID]) => ({
+          id: tenantID,
+          tenantID: tenantID,
+          clientName: clientName,
+          remarks: ''
+        }));
+        
+        setTenantList(fallbackTenants);
+        
+        const idMap: Record<string, string> = {};
+        fallbackTenants.forEach(t => {
+          idMap[t.tenantID] = t.clientName;
+        });
+        setTenantIDMap(idMap);
+        
+        setSelectedTenants(fallbackTenants.map(t => t.tenantID));
       });
   }, [token]);
 
@@ -147,7 +185,7 @@ function ClientPage() {
   const handleSelectAll = (checked: boolean) => {
     setSelectAll(checked);
     if (checked) {
-      setSelectedTenants(tenantList.map(t => t.id));
+      setSelectedTenants(tenantList.map(t => t.tenantID));
     } else {
       setSelectedTenants([]);
     }
@@ -234,10 +272,9 @@ function ClientPage() {
         // 步骤5: 循环调用 syncProductSingle 向各账套写数据
         for (let i = 0; i < totalSets; i++) {
           const tenantID = tenantIDs[i];
-          const tenantName = tenantNameMap[tenantID] || tenantID;
           const currentProgress = 40 + Math.floor((i / totalSets) * 50);
           setProgress(currentProgress);
-          setCurrentStep(`正在同步账套 ${tenantName} (${i + 1}/${totalSets})...`);
+          setCurrentStep(`正在同步账套 ${tenantID} (${i + 1}/${totalSets})...`);
           
           // 更新当前账套状态为同步中
           setTenantSyncStatus(prev => ({
@@ -268,7 +305,7 @@ function ClientPage() {
             }));
             
             syncResults.push({
-              name: tenantName,
+              name: tenantID,
               resCode: result.resCode === 'complete' ? '已成功' : '失败',
               status: '已完成',
               errMsg: result.errMsg || '',
@@ -287,7 +324,7 @@ function ClientPage() {
             }));
             
             syncResults.push({
-              name: tenantName,
+              name: tenantID,
               resCode: '失败',
               status: '已完成',
               errMsg: errorMsg,
@@ -313,7 +350,7 @@ function ClientPage() {
         setDisabled(false);
       }
     };
-  }, [selectedTenants, tenantNameMap]);
+  }, [selectedTenants, tenantIDMap]);
 
   // 同步步骤配置
   const syncSteps = [
@@ -362,18 +399,6 @@ function ClientPage() {
         subTitle="将数据同步到各个账套中"
       />
       <Content>
-        {/* 临时解决方案警告 */}
-        {tenantList.length === 0 && (
-          <Alert
-            message="账套配置提示"
-            description="当前使用硬编码的 clientName 到 tenantID 映射表。如果有新账套无法同步，请联系开发人员更新映射配置。"
-            type="warning"
-            showIcon
-            closable
-            style={{ marginBottom: 16 }}
-          />
-        )}
-        
         <Row gutter={[16, 16]}>
           {/* 左侧：同步控制和进度 */}
           <Col xs={24} lg={10}>
@@ -510,8 +535,8 @@ function ClientPage() {
                   size="small"
                   dataSource={tenantList}
                   renderItem={(tenant) => {
-                    const isSelected = selectedTenants.includes(tenant.id);
-                    const status = tenantSyncStatus[tenant.id];
+                    const isSelected = selectedTenants.includes(tenant.tenantID);
+                    const status = tenantSyncStatus[tenant.tenantID];
                     const duration = status?.startTime && status?.endTime 
                       ? `${((status.endTime - status.startTime) / 1000).toFixed(1)}s`
                       : status?.startTime 
@@ -532,7 +557,7 @@ function ClientPage() {
                           {/* 选择框 */}
                           <Checkbox
                             checked={isSelected}
-                            onChange={(e) => handleTenantSelect(tenant.id, e.target.checked)}
+                            onChange={(e) => handleTenantSelect(tenant.tenantID, e.target.checked)}
                             disabled={disabled}
                           />
                           
@@ -565,7 +590,7 @@ function ClientPage() {
                               fontSize: '13px',
                               marginBottom: status ? '4px' : 0
                             }}>
-                              {tenant.name}
+                              {tenant.tenantID}
                             </div>
                             {status && (
                               <div style={{
