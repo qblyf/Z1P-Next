@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
 
+// 标记为动态路由，因为需要读取 request.url
+export const dynamic = 'force-dynamic';
+
 /**
  * GET /api/tenants
  * 从 SDK getSysSettings API 获取所有账套配置信息
