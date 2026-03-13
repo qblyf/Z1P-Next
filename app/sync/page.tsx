@@ -109,12 +109,20 @@ function ClientPage() {
         // 直接使用 API 返回的账套列表
         const tenants = result.data.map((v: any) => {
           console.log('  处理账套数据:', v);
-          return {
+          const tenant = {
             id: v.tenantID || v.id,
             tenantID: v.tenantID || v.id,
             clientName: v.name,
             remarks: v.remarks
           };
+          console.log('  映射后的账套:', tenant);
+          
+          // 验证 tenantID 是否有效
+          if (!tenant.tenantID) {
+            console.error('  ❌ 警告：账套缺少 tenantID！', v);
+          }
+          
+          return tenant;
         });
         
         console.log(`✅ 成功加载 ${tenants.length} 个账套:`, tenants);
@@ -583,6 +591,21 @@ function ClientPage() {
                 >
                   全选 ({selectedTenants.length}/{tenantList.length})
                 </Checkbox>
+                
+                {/* 调试按钮 */}
+                <Button 
+                  type="link" 
+                  size="small"
+                  onClick={() => {
+                    console.log('📋 当前 tenantList:', tenantList);
+                    console.log('📋 当前 selectedTenants:', selectedTenants);
+                    console.log('📋 当前 tenantIDMap:', tenantIDMap);
+                    alert(`已输出调试信息到控制台\n账套数量: ${tenantList.length}\n已选数量: ${selectedTenants.length}`);
+                  }}
+                  style={{ marginLeft: 8 }}
+                >
+                  🐛 查看数据
+                </Button>
               </div>
               
               <div style={{ maxHeight: '500px', overflow: 'auto' }}>
@@ -652,7 +675,7 @@ function ClientPage() {
                               fontSize: '11px',
                               marginBottom: status ? '4px' : 0
                             }}>
-                              tenantID: {tenant.tenantID}
+                              tenantID: {tenant.tenantID || <span style={{ color: '#ff4d4f' }}>(未设置)</span>}
                             </div>
                             {showDebugInfo && tenant.remarks && (
                               <div style={{
