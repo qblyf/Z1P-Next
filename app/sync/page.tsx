@@ -104,14 +104,18 @@ function ClientPage() {
         }
         
         console.log(`✅ 获取账套列表: ${result.data.length} 个账套`);
+        console.log('📋 原始 API 返回数据:', result.data);
         
         // 直接使用 API 返回的账套列表
-        const tenants = result.data.map((v: any) => ({
-          id: v.tenantID || v.id,
-          tenantID: v.tenantID || v.id,
-          clientName: v.name,
-          remarks: v.remarks
-        }));
+        const tenants = result.data.map((v: any) => {
+          console.log('  处理账套数据:', v);
+          return {
+            id: v.tenantID || v.id,
+            tenantID: v.tenantID || v.id,
+            clientName: v.name,
+            remarks: v.remarks
+          };
+        });
         
         console.log(`✅ 成功加载 ${tenants.length} 个账套:`, tenants);
         setTenantList(tenants);
@@ -201,7 +205,21 @@ function ClientPage() {
         // 步骤4: 使用选中的账套列表
         const tenantIDs = selectedTenants;
         console.log(`准备同步 ${tenantIDs.length} 个账套:`, tenantIDs);
-        console.log('账套列表详情:', tenantList.filter(t => tenantIDs.includes(t.id)));
+        console.log('账套列表详情:', tenantList.filter(t => tenantIDs.includes(t.tenantID)));
+        
+        // 验证 tenantID 是否有效
+        if (tenantIDs.length === 0) {
+          throw new Error('没有选中任何账套');
+        }
+        
+        // 检查每个 tenantID 是否为有效字符串
+        const invalidTenants = tenantIDs.filter(id => !id || typeof id !== 'string');
+        if (invalidTenants.length > 0) {
+          console.error('❌ 发现无效的 tenantID:', invalidTenants);
+          throw new Error(`发现 ${invalidTenants.length} 个无效的账套ID`);
+        }
+        
+        console.log('✅ 所有 tenantID 验证通过');
         
         // 初始化账套状态
         const initialStatus: Record<string, any> = {};
@@ -223,6 +241,15 @@ function ClientPage() {
         // 步骤5: 循环调用 syncProductSingle 向各账套写数据
         for (let i = 0; i < totalSets; i++) {
           const tenantID = tenantIDs[i];
+          
+          // 添加详细的调试日志
+          console.log(`\n🔄 开始同步账套 [${i + 1}/${totalSets}]`);
+          console.log('  - tenantID:', tenantID);
+          console.log('  - tenantID 类型:', typeof tenantID);
+          console.log('  - tenantID 长度:', tenantID?.length);
+          console.log('  - syncDataID:', syncDataID);
+          console.log('  - logID:', logID);
+          
           const currentProgress = 40 + Math.floor((i / totalSets) * 50);
           setProgress(currentProgress);
           setCurrentStep(`正在同步账套 ${tenantID} (${i + 1}/${totalSets})...`);
@@ -237,12 +264,21 @@ function ClientPage() {
           }));
           
           try {
+            console.log(`  ⏳ 调用 syncProductSingle，参数:`, {
+              tenantID,
+              syncDataID,
+              hasData: !!data,
+              logID
+            });
+            
             const result = await syncProductSingle({ 
               tenantID, 
               syncDataID, 
               data,
               logID 
             });
+            
+            console.log(`  ✅ 账套 ${tenantID} 同步成功:`, result);
             
             // 更新账套状态为成功
             setTenantSyncStatus(prev => ({
@@ -264,6 +300,12 @@ function ClientPage() {
           } catch (error) {
             // 更新账套状态为失败
             const errorMsg = error instanceof Error ? error.message : '未知错误';
+            console.error(`  ❌ 账套 ${tenantID} 同步失败:`, error);
+            console.error('  错误详情:', {
+              message: errorMsg,
+              error: error
+            });
+            
             setTenantSyncStatus(prev => ({
               ...prev,
               [tenantID]: { 
