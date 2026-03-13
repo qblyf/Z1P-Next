@@ -78,14 +78,16 @@ export async function GET(request: Request) {
       console.log('  - token 前10位:', token.substring(0, 10) + '...');
     }
     
+    // 在 API 路由中也需要初始化 SDK
+    const { init } = await import('@zsqk/z1-sdk/es/z1p/util');
+    init({ endpoint: endpoint });
+    
     const { getSysSettings } = await import('@zsqk/z1-sdk/es/z1p/sys-setting');
     
     console.log('📡 准备调用 getSysSettings...');
-    console.log('  - 传递的 endpoint:', endpoint);
+    console.log('  - SDK endpoint 已初始化为:', endpoint);
     const sysSettings = await getSysSettings({ 
-      auth: token,
-      // @ts-ignore - SDK 类型定义可能不完整，但运行时需要 endpoint
-      endpoint: endpoint
+      auth: token
     });
     
     console.log('✅ SDK 调用成功，返回数据数量:', sysSettings.length);
