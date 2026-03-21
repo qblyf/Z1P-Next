@@ -186,6 +186,15 @@ export default function SPUAdd() {
           />
         </Form.Item>
 
+        <Form.Item label="型号代码" tooltip="商品的型号代码, 方便进行查找">
+          <Input
+            value={input.modelCode}
+            onChange={e => {
+              setInput(update(input, { modelCode: { $set: e.target.value } }));
+            }}
+          />
+        </Form.Item>
+
         <Form.Item label="SPU 分类" tooltip="SPU 所在的 分类">
           {spuCate.name}
         </Form.Item>
