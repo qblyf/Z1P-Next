@@ -1193,18 +1193,22 @@ function SpecManage({ specName, title }: SpecManageProps) {
     const others = allSpecs.filter((s) => s.zid !== excludeZid);
     if (others.length === 0) return 5000;
 
+    let weight: number;
     if (targetAbsIdx <= 0) {
       // 插入到第一位
-      return (10000 + others[0].sortWeight) / 2;
+      weight = (10000000 + others[0].sortWeight) / 2;
     } else if (targetAbsIdx >= others.length) {
       // 插入到最后一位
-      return (0.000 + others[others.length - 1].sortWeight) / 2;
+      weight = (0.000 + others[others.length - 1].sortWeight) / 2;
     } else {
       // 插入到中间位置
       const prev = others[targetAbsIdx - 1];
       const next = others[targetAbsIdx];
-      return (prev.sortWeight + next.sortWeight) / 2;
+      weight = (prev.sortWeight + next.sortWeight) / 2;
     }
+
+    // 四舍五入保留3位小数
+    return Math.round(weight);
   }, []);
 
   // 保存单个规格值的排序权重到后端
@@ -2075,7 +2079,7 @@ function SpecAdd(props: { specName: SpecName; title: string; onSuccess?: () => v
               const targetIdx = input.insertPosition - 1;
               let sortWeight: number;
               if (specs.length === 0) {
-                sortWeight = 2;
+                sortWeight = 5000;
               } else if (targetIdx <= 0) {
                 sortWeight = Math.abs((10000 + specs[0].sortWeight) / 2);
               } else if (targetIdx >= specs.length) {
