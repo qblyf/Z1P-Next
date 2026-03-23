@@ -39,6 +39,7 @@ import { ChangeTable } from './ChangeTable';
 import SKUManager from './SKUManager';
 import { SKUEdit } from './SKUEdit';
 import SPUParamConfig from './SPUParamConfig';
+import SearchKeywordsManager from './SearchKeywordsManager';
 import './SPUEdit.css';
 
 type SPUEditing = Omit<SPU, 'images'> & {
@@ -88,6 +89,8 @@ export default function SPUEdit(props: { defaultTab?: string }) {
   const transSpuDataToEditingData = useCallback((spu: SPU): SPUEditing => {
     return {
       ...spu,
+      // 确保keywords字段存在且格式正确
+      keywords: spu.keywords || [],
       images: {
         thumbnail: spu.images.thumbnail
           ? {
@@ -310,6 +313,24 @@ export default function SPUEdit(props: { defaultTab?: string }) {
                       );
                     }}
                   />
+                </Form.Item>
+
+                <Form.Item 
+                  label="搜索关键词" 
+                  tooltip="用于网站搜索商品时的关键词匹配"
+                >
+                  <div>
+                
+                    <SearchKeywordsManager
+                      keywords={input.keywords ?? preData.keywords}
+                      onChange={keywords => {
+                        console.log('Keywords changed:', keywords);
+                        setInput(
+                          update(input, { keywords: { $set: keywords } })
+                        );
+                      }}
+                    />
+                  </div>
                 </Form.Item>
 
                 <Form.Item>

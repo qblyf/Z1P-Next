@@ -18,6 +18,7 @@ import { postAwait } from '../error';
 import { useBrandListContext } from '../datahooks/brand';
 import Upload from './Upload';
 import { useTokenContext } from '../datahooks/auth';
+import SearchKeywordsManager from './SearchKeywordsManager';
 
 /**
  * [组件] 新增 SPU
@@ -300,6 +301,20 @@ export default function SPUAdd() {
             value={input.remarks}
             onChange={e => {
               setInput(update(input, { remarks: { $set: e.target.value } }));
+            }}
+          />
+        </Form.Item>
+
+        <Form.Item 
+          label="搜索关键词" 
+          tooltip="用于网站搜索商品时的关键词匹配"
+        >
+          <SearchKeywordsManager
+            keywords={input.keywords}
+            onChange={keywords => {
+              setInput(
+                update(input, { keywords: { $set: keywords } })
+              );
             }}
           />
         </Form.Item>
