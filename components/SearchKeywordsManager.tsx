@@ -1,6 +1,6 @@
 import { SpuKeyword, SpuKeyWordID } from '@zsqk/z1-sdk/es/z1p/alltypes';
 import { Button, Input, InputNumber, Select, Space, Table, Tag, Tooltip, message } from 'antd';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 
 interface SearchKeywordsManagerProps {
   keywords: SpuKeyword[];
@@ -9,6 +9,16 @@ interface SearchKeywordsManagerProps {
 
 interface ExtendedKeyword extends SpuKeyword {
   externalId: number;
+}
+
+interface TableRecord {
+  key: string;
+  externalId: number;
+  id: SpuKeyWordID;
+  dimension: string;
+  weight: number;
+  keywords: string;
+  rawKeywords: string[];
 }
 
 const DIMENSION_OPTIONS = [
@@ -39,13 +49,13 @@ export default function SearchKeywordsManager({ keywords, onChange }: SearchKeyw
   } | null>(null);
 
   // 将原始keywords转换为带externalId的扩展格式
-  const extendedKeywords: ExtendedKeyword[] = (keywords || []).map((kw, index) => ({
+  const extendedKeywords: ExtendedKeyword[] = (keywords || []).map((kw) => ({
     ...kw,
     externalId: generateRandomId() // 为现有数据生成随机ID
   }));
 
   // 构建表格数据
-  const tableData = extendedKeywords
+  const tableData: TableRecord[] = extendedKeywords
     .map((kw) => ({
       key: kw.externalId.toString(),
       externalId: kw.externalId,
@@ -97,7 +107,7 @@ export default function SearchKeywordsManager({ keywords, onChange }: SearchKeyw
     setTempKeywords('');
   };
 
-  const handleEditKeyword = (record: any) => {
+  const handleEditKeyword = (record: TableRecord) => {
     if (editingExternalId !== null) return; // 如果已有其他行在编辑，则不允许编辑
     
     setEditingExternalId(record.externalId);
@@ -109,7 +119,7 @@ export default function SearchKeywordsManager({ keywords, onChange }: SearchKeyw
     setTempKeywords(record.keywords);
   };
 
-  const handleSaveEdit = (record: any) => {
+  const handleSaveEdit = (record: TableRecord) => {
     if (!editingData) return;
 
     const keywordArray = tempKeywords.split('，').filter(k => k.trim());
@@ -141,7 +151,7 @@ export default function SearchKeywordsManager({ keywords, onChange }: SearchKeyw
     setTempKeywords('');
   };
 
-  const handleDeleteKeyword = (record: any) => {
+  const handleDeleteKeyword = (record: TableRecord) => {
     const targetIndex = extendedKeywords.findIndex(kw => kw.externalId === record.externalId);
     if (targetIndex !== -1) {
       const updatedKeywords = keywords.filter((_, index) => index !== targetIndex);
@@ -155,7 +165,7 @@ export default function SearchKeywordsManager({ keywords, onChange }: SearchKeyw
       dataIndex: 'dimension',
       key: 'dimension',
       width: 120,
-      render: (_: any, record: any) => {
+      render: (_value: unknown, record: TableRecord) => {
         const isEditing = editingExternalId === record.externalId;
         
         if (isEditing) {
@@ -178,7 +188,7 @@ export default function SearchKeywordsManager({ keywords, onChange }: SearchKeyw
       dataIndex: 'weight',
       key: 'weight',
       width: 100,
-      render: (_: any, record: any) => {
+      render: (_value: unknown, record: TableRecord) => {
         const isEditing = editingExternalId === record.externalId;
         
         if (isEditing) {
@@ -200,7 +210,7 @@ export default function SearchKeywordsManager({ keywords, onChange }: SearchKeyw
       title: '关键词',
       dataIndex: 'keywords',
       key: 'keywords',
-      render: (_: any, record: any) => {
+      render: (_value: unknown, record: TableRecord) => {
         const isEditing = editingExternalId === record.externalId;
         
         if (isEditing) {
@@ -226,7 +236,7 @@ export default function SearchKeywordsManager({ keywords, onChange }: SearchKeyw
       title: '操作',
       key: 'action',
       width: 150,
-      render: (_: any, record: any) => {
+      render: (_value: unknown, record: TableRecord) => {
         const isEditing = editingExternalId === record.externalId;
         
         if (isEditing) {
@@ -296,7 +306,7 @@ export default function SearchKeywordsManager({ keywords, onChange }: SearchKeyw
           </Button>
         </Tooltip>
         <div style={{ marginTop: 8, fontSize: 12, color: '#888' }}>
-          说明：用于网站搜索商品时的关键词匹配，多个关键词使用逗号"，"分隔
+          说明：用于网站搜索商品时的关键词匹配，多个关键词使用逗号&quot;，&quot;分隔
         </div>
       </div>
       

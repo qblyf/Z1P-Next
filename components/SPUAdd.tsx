@@ -185,7 +185,7 @@ export default function SPUAdd() {
 
         <Form.Item label="型号代码" tooltip="商品的型号代码, 方便进行查找">
           <Input
-            value={input.modelCode}
+            value={input.modelCode ?? ''}
             onChange={e => {
               setInput(update(input, { modelCode: { $set: e.target.value } }));
             }}

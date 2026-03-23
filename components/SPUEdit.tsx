@@ -217,7 +217,7 @@ export default function SPUEdit(props: { defaultTab?: string }) {
                   tooltip="商品的型号代码, 方便进行查找"
                 >
                   <Input
-                    value={input.modelCode ?? preData.modelCode}
+                    value={(input.modelCode ?? preData.modelCode) ?? ''}
                     onChange={e => {
                       setInput(
                         update(input, { modelCode: { $set: e.target.value } })
