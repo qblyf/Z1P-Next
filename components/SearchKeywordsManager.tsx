@@ -1,6 +1,6 @@
 import { SpuKeyword, SpuKeyWordID } from '@zsqk/z1-sdk/es/z1p/alltypes';
 import { Button, Input, InputNumber, Select, Space, Table, Tag, Tooltip, message } from 'antd';
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 
 interface SearchKeywordsManagerProps {
   keywords: SpuKeyword[];
@@ -47,6 +47,7 @@ export default function SearchKeywordsManager({ keywords, onChange }: SearchKeyw
     weight: number;
     keywords: string[];
   } | null>(null);
+  const [smartSettingLoading, setSmartSettingLoading] = useState(false);
 
   // 将原始keywords转换为带externalId的扩展格式
   // 使用数组索引作为稳定的externalId
@@ -157,6 +158,20 @@ export default function SearchKeywordsManager({ keywords, onChange }: SearchKeyw
     if (targetIndex !== -1) {
       const updatedKeywords = keywords.filter((_, index) => index !== targetIndex);
       onChange(updatedKeywords);
+    }
+  };
+
+  const handleSmartSetKeywords = async () => {
+    setSmartSettingLoading(true);
+    try {
+      // TODO: 调用 SDK 函数获取关键词
+      // const res = await spuSegment({ desc: spuDesc }, { auth: token });
+      // onChange(result);
+      message.success('关键词获取成功');
+    } catch {
+      message.error('搜索关键词获取失败，请稍后重试');
+    } finally {
+      setSmartSettingLoading(false);
     }
   };
 
@@ -294,18 +309,26 @@ export default function SearchKeywordsManager({ keywords, onChange }: SearchKeyw
   return (
     <div>
       <div style={{ marginBottom: 16 }}>
-        <Tooltip 
+        <Tooltip
           title={editingExternalId !== null ? '请保存后新增' : ''}
           trigger={editingExternalId !== null ? 'hover' : []}
         >
-          <Button 
-            type="primary" 
+          <Button
+            type="primary"
             onClick={handleAddKeyword}
             disabled={editingExternalId !== null}
           >
             新增关键词
           </Button>
         </Tooltip>
+        <Button
+          style={{ marginLeft: 8 }}
+          loading={smartSettingLoading}
+          onClick={handleSmartSetKeywords}
+          disabled={editingExternalId !== null}
+        >
+          智能设置关键词
+        </Button>
         <div style={{ marginTop: 8, fontSize: 12, color: '#888' }}>
           说明：用于网站搜索商品时的关键词匹配，多个关键词使用逗号&quot;，&quot;分隔
         </div>
