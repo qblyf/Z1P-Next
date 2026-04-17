@@ -285,22 +285,48 @@ export class FuzzyMatcher {
   
   /**
    * 计算关键词匹配加分
+   *
+   * 增强的关键词提取（支持混合字母数字模式）：
+   * - 基本分词：按空格、标点分割
+   * - 混合模式提取：提取如 "12G+256G"、"X5LINK"、"promax" 等模式
    */
   private calculateKeywordBonus(
     input: string,
     spuName: string,
     tokenize: (str: string) => string[]
   ): number {
+    // 增强的关键词提取（与 CLI 算法一致）
+    const extractKeyParts = (str: string): string[] => {
+      const parts: string[] = [];
+
+      // 基本分词：按空格、标点分割
+      const words = str.split(/[\s\-_\.,，、。]+/);
+      for (const word of words) {
+        if (word.length >= 2) parts.push(word.toLowerCase());
+      }
+
+      // 混合模式提取：提取字母数字混合的关键词
+      // 匹配模式：12G+256G, X5LINK, promax, 8GB+256GB 等
+      const mixedMatches = str.match(/\d*[a-zA-Z]+\d*|\d+\+\d+|\d+[a-zA-Z]/gi);
+      if (mixedMatches) {
+        for (const m of mixedMatches) {
+          if (m.length >= 2) parts.push(m.toLowerCase());
+        }
+      }
+
+      return parts;
+    };
+
     let keywordMatchCount = 0;
-    const inputTokens = tokenize(input);
+    const inputTokens = extractKeyParts(input);
     const lowerSPUName = spuName.toLowerCase();
-    
+
     for (const token of inputTokens) {
-      if (token.length > 2 && lowerSPUName.includes(token)) {
+      if (token.length >= 2 && lowerSPUName.includes(token)) {
         keywordMatchCount++;
       }
     }
-    
+
     return Math.min(
       keywordMatchCount * SPU_MATCH_SCORES.KEYWORD_BONUS_PER_MATCH,
       SPU_MATCH_SCORES.KEYWORD_BONUS_MAX

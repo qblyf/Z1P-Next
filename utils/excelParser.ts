@@ -10,9 +10,116 @@
 import * as XLSX from 'xlsx';
 
 /**
- * Excel 行数据接口
+ * Excel 行数据接口（通用）
  */
 export interface ExcelRowData {
+  /** 商品名称 */
+  productName: string;
+  /** 69码（可选） */
+  gtin?: string;
+  /** 转换为系统格式后的名称 */
+  normalizedName?: string;
+}
+
+/**
+ * 解析后的 Excel 数据（包含表头和所有列）
+ */
+export interface ParsedExcelData {
+  /** 表头 */
+  headers: string[];
+  /** 数据行 */
+  rows: string[][];
+  /** 每个商品名称对应的行索引 */
+  productNameIndex: number;
+  /** 69码对应的列索引（如果有） */
+  gtinIndex?: number;
+}
+
+/**
+ * Excel 文件解析选项
+ */
+export interface ExcelParseOptions {
+  /** 商品名称列索引（从0开始） */
+  productNameColumn: number;
+  /** 69码列索引（可选，从0开始） */
+  gtinColumn?: number;
+}
+
+/**
+ * 解析 Excel 文件（通用版本，支持选择列）
+ * @param file Excel 文件（File 对象）
+ * @param options 解析选项
+ * @returns 解析后的行数据数组
+ */
+export async function parseExcelGeneric(
+  file: File,
+  options: ExcelParseOptions
+): Promise<ExcelRowData[]> {
+  const arrayBuffer = await file.arrayBuffer();
+  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+
+  const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
+
+  if (jsonData.length < 2) {
+    throw new Error('Excel 文件数据少于2行，请检查文件格式');
+  }
+
+  const { productNameColumn, gtinColumn } = options;
+
+  // 解析数据行
+  const results: ExcelRowData[] = [];
+
+  for (let i = 1; i < jsonData.length; i++) {
+    const row = jsonData[i] as string[];
+    if (!row || row.length === 0) continue;
+
+    const productName = String(row[productNameColumn] || '').trim();
+    const gtin = gtinColumn !== undefined ? String(row[gtinColumn] || '').trim() : undefined;
+
+    if (!productName) continue;
+
+    results.push({
+      productName,
+      gtin: gtin || undefined,
+    });
+  }
+
+  console.log(`[Excel解析] 成功解析 ${results.length} 行数据`);
+  return results;
+}
+
+/**
+ * 预览 Excel 文件的表头和第一行数据
+ * @param file Excel 文件
+ * @returns 表头和第一行数据
+ */
+export async function previewExcel(file: File): Promise<{ headers: string[]; firstRow: string[] }> {
+  const arrayBuffer = await file.arrayBuffer();
+  const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+
+  const sheetName = workbook.SheetNames[0];
+  const worksheet = workbook.Sheets[sheetName];
+
+  const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
+
+  if (jsonData.length < 2) {
+    throw new Error('Excel 文件数据少于2行，请检查文件格式');
+  }
+
+  const headers = (jsonData[0] as string[]).map(h => String(h || ''));
+  const firstRow = (jsonData[1] as string[]).map(c => String(c || ''));
+
+  return { headers, firstRow };
+}
+
+/**
+ * Excel 行数据接口（兼容旧版）
+ * @deprecated 使用 ExcelRowData 代替
+ */
+export interface LegacyExcelRowData {
   /** 纬图sku名称 */
   skuName: string;
   /** 69码 */
@@ -58,7 +165,7 @@ const BRAND_PATTERNS: { pattern: RegExp; brand: string }[] = [
  * @param file Excel 文件（File 对象或 ArrayBuffer）
  * @returns 解析后的行数据数组
  */
-export async function parseExcelFile(file: File | ArrayBuffer): Promise<ExcelRowData[]> {
+export async function parseExcelFile(file: File | ArrayBuffer): Promise<LegacyExcelRowData[]> {
   let workbook: XLSX.WorkBook;
 
   if (file instanceof File) {
@@ -97,7 +204,7 @@ export async function parseExcelFile(file: File | ArrayBuffer): Promise<ExcelRow
   }
 
   // 解析数据行
-  const results: ExcelRowData[] = [];
+  const results: LegacyExcelRowData[] = [];
 
   for (let i = 1; i < jsonData.length; i++) {
     const row = jsonData[i] as string[];
@@ -185,18 +292,10 @@ export function convertToSystemFormat(skuName: string): string {
   // 6. 去除多余的后缀信息（这些会影响匹配）
   // 版本后缀：焕新版、标准版、公开版、定制版、标配版、高配版、尊享版、典藏版、保时捷设计等
   const suffixPatterns = [
-    /焕新版/gi,
-    /标准版/gi,
-    /公开版/gi,
-    /定制版/gi,
-    /标配版/gi,
-    /高配版/gi,
-    /尊享版/gi,
-    /典藏版/gi,
-    /保时捷设计/gi,
-    /高定款/gi,
+    // 零售版标记 - 去除
     /零售样机/gi,
     /样机/gi,
+    // 网络制式 - 去除（系统名称中可能没有）
     /双卡全网通版/gi,
     /双卡全网通/gi,
     /全网通版/gi,
@@ -205,7 +304,7 @@ export function convertToSystemFormat(skuName: string): string {
     /单卡版/gi,
     /WIFI版/gi,
     /WIFI6/gi,
-    /WIFI/gi,
+    // 电脑配置信息 - 去除
     /ARLULTRA\d+/gi,
     /RTX\d+/gi,
     /SSD\d+TB/gi,
@@ -213,10 +312,12 @@ export function convertToSystemFormat(skuName: string): string {
     /SSD\d+G/gi,
     /RAM\d+GB/gi,
     /RAM\d+G/gi,
+    // 屏幕尺寸标准化 - 保留吋但去除空格
     /16吋/gi,
     /14\.6吋/gi,
     /14吋/gi,
   ];
+  // 注意：保留版本后缀（焕新版、标准版、公开版等），因为系统 SPU 名称中也包含这些
 
   for (const pattern of suffixPatterns) {
     remaining = remaining.replace(pattern, ' ');
@@ -248,7 +349,7 @@ export function convertToSystemFormat(skuName: string): string {
  * @param file Excel 文件
  * @returns 包含原始数据和转换后数据的数组
  */
-export async function parseExcelAndConvert(file: File): Promise<ExcelRowData[]> {
+export async function parseExcelAndConvert(file: File): Promise<LegacyExcelRowData[]> {
   const rows = await parseExcelFile(file);
 
   return rows.map(row => ({
@@ -258,11 +359,11 @@ export async function parseExcelAndConvert(file: File): Promise<ExcelRowData[]> 
 }
 
 /**
- * 将 Excel 行数据数组转换为匹配输入格式
+ * 将 Excel 行数据数组转换为匹配输入格式（使用 LegacyExcelRowData）
  * @param rows Excel 行数据数组
  * @returns 用于匹配的输入字符串数组
  */
-export function toMatchInputs(rows: ExcelRowData[]): string[] {
+export function toMatchInputs(rows: LegacyExcelRowData[]): string[] {
   return rows.map(row => row.normalizedName || convertToSystemFormat(row.skuName));
 }
 
@@ -271,10 +372,58 @@ export function toMatchInputs(rows: ExcelRowData[]): string[] {
  * @param rows Excel 行数据数组
  * @returns Map：匹配输入 -> Excel原始数据
  */
-export function createInputToRowMap(rows: ExcelRowData[]): Map<string, ExcelRowData> {
-  const map = new Map<string, ExcelRowData>();
+export function createInputToRowMap(rows: LegacyExcelRowData[]): Map<string, LegacyExcelRowData> {
+  const map = new Map<string, LegacyExcelRowData>();
   for (const row of rows) {
     const key = row.normalizedName || convertToSystemFormat(row.skuName);
+    if (!map.has(key)) {
+      map.set(key, row);
+    }
+  }
+  return map;
+}
+
+/**
+ * 使用列选择解析 Excel 并转换为系统格式
+ * @param file Excel 文件
+ * @param productNameColumn 商品名称列索引（从0开始）
+ * @param gtinColumn 69码列索引（可选，从0开始）
+ * @returns 解析后的行数据数组
+ */
+export async function parseExcelWithColumnSelection(
+  file: File,
+  productNameColumn: number,
+  gtinColumn?: number
+): Promise<ExcelRowData[]> {
+  const rows = await parseExcelGeneric(file, {
+    productNameColumn,
+    gtinColumn,
+  });
+
+  return rows.map(row => ({
+    ...row,
+    normalizedName: convertToSystemFormat(row.productName),
+  }));
+}
+
+/**
+ * 将 Excel 行数据数组转换为匹配输入格式（通用版本）
+ * @param rows Excel 行数据数组
+ * @returns 用于匹配的输入字符串数组
+ */
+export function toMatchInputsGeneric(rows: ExcelRowData[]): string[] {
+  return rows.map(row => row.normalizedName || convertToSystemFormat(row.productName));
+}
+
+/**
+ * 创建用于显示的映射表（输入 -> 原始数据）（通用版本）
+ * @param rows Excel 行数据数组
+ * @returns Map：匹配输入 -> Excel原始数据
+ */
+export function createInputToRowMapGeneric(rows: ExcelRowData[]): Map<string, ExcelRowData> {
+  const map = new Map<string, ExcelRowData>();
+  for (const row of rows) {
+    const key = row.normalizedName || convertToSystemFormat(row.productName);
     if (!map.has(key)) {
       map.set(key, row);
     }

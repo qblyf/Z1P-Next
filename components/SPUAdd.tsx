@@ -1,7 +1,7 @@
 import { AddSPUInfo } from '@zsqk/z1-sdk/es/z1p/product-types';
-import { addSPUInfo } from '@zsqk/z1-sdk/es/z1p/product';
+import { addSPUInfo, nextSpuOrder } from '@zsqk/z1-sdk/es/z1p/product';
 import { Button, DatePicker, Form, Input, Select } from 'antd';
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import update from 'immutability-helper';
 import pinyin from 'tiny-pinyin';
 import _ from 'lodash';
@@ -56,8 +56,13 @@ export default function SPUAdd() {
     throw new Error('因外层组件处理, 所以不该到达此处');
   }
 
-  const init = () => {
-    setOrder('');
+  useEffect(() => {
+    init();
+  }, []);
+
+  const init = async () => {
+    const nextOrder = await nextSpuOrder({ auth: token });
+    setOrder(String(nextOrder));
     setInput({
       name: '',
       spell: '',
@@ -333,7 +338,7 @@ export default function SPUAdd() {
                 },
                 { auth: token }
               );
-              init();
+              await init();
               // update spu list - 只添加 spuList 需要的字段
               const newSpu = {
                 id,

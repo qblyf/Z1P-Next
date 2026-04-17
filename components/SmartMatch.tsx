@@ -1,13 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { message, Spin, Upload, Button } from 'antd';
+import { message, Spin, Upload, Button, Select, Modal } from 'antd';
 import { UploadOutlined, FileExcelOutlined, ClearOutlined } from '@ant-design/icons';
 import { getSPUListNew } from '@zsqk/z1-sdk/es/z1p/product';
 import { SPUState } from '@zsqk/z1-sdk/es/z1p/alltypes';
 import { getBrandBaseList } from '@zsqk/z1-sdk/es/z1p/brand';
 import { MatchingOrchestrator } from '../utils/services/MatchingOrchestrator';
-import { parseExcelAndConvert, createInputToRowMap, type ExcelRowData } from '../utils/excelParser';
+import { parseExcelWithColumnSelection, createInputToRowMapGeneric, previewExcel, type ExcelRowData } from '../utils/excelParser';
 import type { SPUData, BrandData } from '../utils/types';
 import { InputPanel } from './SmartMatch/InputPanel';
 import { ResultPanel } from './SmartMatch/ResultPanel';
@@ -52,6 +52,13 @@ export default function SmartMatch() {
   // Excel 导入相关状态
   const [excelData, setExcelData] = useState<ExcelRowData[]>([]);
   const [isExcelMode, setIsExcelMode] = useState(false);
+  // Excel 列选择相关状态
+  const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
+  const [excelFirstRow, setExcelFirstRow] = useState<string[]>([]);
+  const [selectedProductColumn, setSelectedProductColumn] = useState<number | null>(null);
+  const [selectedGtinColumn, setSelectedGtinColumn] = useState<number | null>(null);
+  const [showColumnSelector, setShowColumnSelector] = useState(false);
+  const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   // 初始化 orchestrator（加载配置）
   useEffect(() => {
@@ -194,7 +201,7 @@ export default function SmartMatch() {
 
     try {
       // 创建输入到原始数据的映射
-      const inputToRowMap = createInputToRowMap(rows);
+      const inputToRowMap = createInputToRowMapGeneric(rows);
 
       // 提取需要匹配的输入数组
       const inputs = Array.from(inputToRowMap.keys());
@@ -209,7 +216,7 @@ export default function SmartMatch() {
         const originalRow = inputToRowMap.get(result.inputName);
         return {
           inputName: result.inputName,
-          originalSkuName: originalRow?.skuName,
+          originalSkuName: originalRow?.productName,
           matchedSKU: result.matchedInfo.sku || null,
           matchedSPU: result.matchedInfo.spu || null,
           matchedBrand: result.extractedInfo.brand || null,
@@ -241,13 +248,49 @@ export default function SmartMatch() {
     }
   };
 
-  // 处理 Excel 文件上传
+  // 处理 Excel 文件上传（先预览表头）
   const handleExcelUpload = async (file: File) => {
     try {
-      setLoading(true);
-      console.log('[Excel导入] 开始解析文件:', file.name);
+      console.log('[Excel导入] 预览文件:', file.name);
 
-      const rows = await parseExcelAndConvert(file);
+      // 预览 Excel 文件
+      const { headers, firstRow } = await previewExcel(file);
+      setExcelHeaders(headers);
+      setExcelFirstRow(firstRow);
+      setPendingFile(file);
+      setShowColumnSelector(true);
+
+    } catch (error) {
+      console.error('[Excel导入] 预览失败:', error);
+      message.error(`预览失败: ${error instanceof Error ? error.message : '未知错误'}`);
+    }
+
+    // 返回 false 阻止默认上传行为
+    return false;
+  };
+
+  // 处理列选择确认
+  const handleColumnConfirm = async () => {
+    if (selectedProductColumn === null) {
+      message.warning('请选择商品名称列');
+      return;
+    }
+
+    if (!pendingFile) {
+      message.warning('文件信息丢失，请重新上传');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setShowColumnSelector(false);
+      console.log('[Excel导入] 开始解析文件:', pendingFile.name);
+
+      const rows = await parseExcelWithColumnSelection(
+        pendingFile,
+        selectedProductColumn,
+        selectedGtinColumn ?? undefined
+      );
       setExcelData(rows);
       setIsExcelMode(true);
 
@@ -261,10 +304,18 @@ export default function SmartMatch() {
       message.error(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
     } finally {
       setLoading(false);
+      setPendingFile(null);
     }
+  };
 
-    // 返回 false 阻止默认上传行为
-    return false;
+  // 取消列选择
+  const handleColumnCancel = () => {
+    setShowColumnSelector(false);
+    setExcelHeaders([]);
+    setExcelFirstRow([]);
+    setSelectedProductColumn(null);
+    setSelectedGtinColumn(null);
+    setPendingFile(null);
   };
 
   // 处理手动输入匹配
@@ -357,6 +408,11 @@ export default function SmartMatch() {
   const handleClearExcel = () => {
     setExcelData([]);
     setIsExcelMode(false);
+    setExcelHeaders([]);
+    setExcelFirstRow([]);
+    setSelectedProductColumn(null);
+    setSelectedGtinColumn(null);
+    setPendingFile(null);
     setInputText('');
     setResults([]);
     setCurrentPage(1);
@@ -425,7 +481,7 @@ export default function SmartMatch() {
           </Upload>
 
           <div className="mt-2 text-xs text-gray-400">
-            支持 .xls/.xlsx 格式，列名需包含&quot;纬图sku名称&quot;和&quot;69码&quot;
+            支持 .xls/.xlsx 格式
           </div>
         </div>
 
@@ -456,6 +512,59 @@ export default function SmartMatch() {
           onPageChange={handlePageChange}
         />
       </div>
+
+      {/* 列选择弹窗 */}
+      <Modal
+        title="选择Excel列"
+        open={showColumnSelector}
+        onOk={handleColumnConfirm}
+        onCancel={handleColumnCancel}
+        okText="确认并匹配"
+        cancelText="取消"
+        width={600}
+      >
+        <div className="space-y-4 py-4">
+          <p className="text-gray-600">请选择商品名称列和69码列（可选）：</p>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              商品名称列 <span className="text-red-500">*</span>
+            </label>
+            <Select
+              style={{ width: '100%' }}
+              placeholder="请选择商品名称列"
+              value={selectedProductColumn}
+              onChange={setSelectedProductColumn}
+              options={excelHeaders.map((header, index) => ({
+                label: `${header || `列${index + 1}`} → ${excelFirstRow[index] || '(空)'}`,
+                value: index,
+              }))}
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              69码列（可选）
+            </label>
+            <Select
+              style={{ width: '100%' }}
+              placeholder="请选择69码列（可选）"
+              value={selectedGtinColumn}
+              onChange={setSelectedGtinColumn}
+              allowClear
+              options={excelHeaders.map((header, index) => ({
+                label: `${header || `列${index + 1}`} → ${excelFirstRow[index] || '(空)'}`,
+                value: index,
+              }))}
+            />
+          </div>
+
+          <div className="bg-gray-50 p-3 rounded text-xs text-gray-500">
+            <p>提示：选择商品名称列后，系统将对该列的数据进行匹配。</p>
+            <p>如果选择69码列，匹配结果将关联对应的69码信息。</p>
+          </div>
+        </div>
+      </Modal>
     </div>
   );
 }

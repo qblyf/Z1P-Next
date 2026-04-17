@@ -162,12 +162,13 @@ export class ExactMatcher {
         : SPU_PRIORITIES.STANDARD;
       
       // 计算加分项
-      const keywordBonus = options?.tokenize 
+      const keywordBonus = options?.tokenize
         ? this.calculateKeywordBonus(originalInput, spu.name, options.tokenize)
         : 0;
       const modelDetailBonus = this.calculateModelDetailBonus(inputModel, spu.extractedModel);
-      
-      const finalScore = Math.min(baseScore + keywordBonus + modelDetailBonus, 1.0);
+      const versionSuffixBonus = this.calculateVersionSuffixBonus(originalInput, spu.name);
+
+      const finalScore = Math.min(baseScore + keywordBonus + modelDetailBonus + versionSuffixBonus, 1.0);
       
       // 创建匹配解释
       const explanation: MatchExplanation = {
@@ -192,7 +193,7 @@ export class ExactMatcher {
         )
       };
       
-      console.log(`[精确匹配] ✓ 找到匹配: "${spu.name}", 版本匹配: ${versionMatchResult.matchType}, 基础分: ${baseScore.toFixed(2)}, 关键词加分: ${keywordBonus.toFixed(2)}, 型号详细度加分: ${modelDetailBonus.toFixed(2)}, 最终分数: ${finalScore.toFixed(2)}`);
+      console.log(`[精确匹配] ✓ 找到匹配: "${spu.name}", 版本匹配: ${versionMatchResult.matchType}, 基础分: ${baseScore.toFixed(2)}, 关键词加分: ${keywordBonus.toFixed(2)}, 型号详细度加分: ${modelDetailBonus.toFixed(2)}, 版本后缀加分: ${versionSuffixBonus.toFixed(2)}, 最终分数: ${finalScore.toFixed(2)}`);
       console.log(`[精确匹配]   版本说明: ${versionMatchResult.explanation}`);
       
       matches.push({
@@ -241,22 +242,48 @@ export class ExactMatcher {
   
   /**
    * 计算关键词匹配加分
+   *
+   * 增强的关键词提取（支持混合字母数字模式）：
+   * - 基本分词：按空格、标点分割
+   * - 混合模式提取：提取如 "12G+256G"、"X5LINK"、"promax" 等模式
    */
   private calculateKeywordBonus(
     input: string,
     spuName: string,
     tokenize: (str: string) => string[]
   ): number {
+    // 增强的关键词提取（与 CLI 算法一致）
+    const extractKeyParts = (str: string): string[] => {
+      const parts: string[] = [];
+
+      // 基本分词：按空格、标点分割
+      const words = str.split(/[\s\-_\.,，、。]+/);
+      for (const word of words) {
+        if (word.length >= 2) parts.push(word.toLowerCase());
+      }
+
+      // 混合模式提取：提取字母数字混合的关键词
+      // 匹配模式：12G+256G, X5LINK, promax, 8GB+256GB 等
+      const mixedMatches = str.match(/\d*[a-zA-Z]+\d*|\d+\+\d+|\d+[a-zA-Z]/gi);
+      if (mixedMatches) {
+        for (const m of mixedMatches) {
+          if (m.length >= 2) parts.push(m.toLowerCase());
+        }
+      }
+
+      return parts;
+    };
+
     let keywordMatchCount = 0;
-    const inputTokens = tokenize(input);
+    const inputTokens = extractKeyParts(input);
     const lowerSPUName = spuName.toLowerCase();
-    
+
     for (const token of inputTokens) {
-      if (token.length > 2 && lowerSPUName.includes(token)) {
+      if (token.length >= 2 && lowerSPUName.includes(token)) {
         keywordMatchCount++;
       }
     }
-    
+
     return Math.min(
       keywordMatchCount * SPU_MATCH_SCORES.KEYWORD_BONUS_PER_MATCH,
       SPU_MATCH_SCORES.KEYWORD_BONUS_MAX
@@ -300,6 +327,28 @@ export class ExactMatcher {
     }
     
     return Math.min(bonus, SPU_MATCH_SCORES.MODEL_DETAIL_BONUS_MAX);
+  }
+
+  /**
+   * 计算版本后缀加分
+   *
+   * 如果输入和SPU都包含版本后缀（如焕新版、标准版、公开版等），给予加分
+   * 这有助于区分同一型号的不同版本（如荣耀X70 和 荣耀X70 焕新版）
+   */
+  private calculateVersionSuffixBonus(input: string, spuName: string): number {
+    const versionSuffixes = ['焕新版', '标准版', '公开版', '定制版', '高配版', '尊享版', '典藏版', '标配版'];
+
+    const lowerInput = input.toLowerCase();
+    const lowerSPUName = spuName.toLowerCase();
+
+    for (const suffix of versionSuffixes) {
+      const lowerSuffix = suffix.toLowerCase();
+      if (lowerInput.includes(lowerSuffix) && lowerSPUName.includes(lowerSuffix)) {
+        return 0.2; // 版本后缀匹配，加20分
+      }
+    }
+
+    return 0;
   }
   
   /**
