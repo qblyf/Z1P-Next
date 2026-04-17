@@ -87,13 +87,30 @@ function convertToSystemFormat(skuName) {
     remaining = normalized.replace(new RegExp(`^${brand}`), '').trim();
   }
 
-  // 4. 容量标准化 - 修复：先处理TB（防止12GB+1TB被错误匹配）
+  // 4. 容量标准化 - 处理顺序很重要！
+  // 先处理 SSD 作为分隔符的情况（要把 SSD 前后的容量分开）
+  // 注意：必须在 TB/GB 替换之前处理，否则 1TB 会变成 1T 导致模式不匹配
+  remaining = remaining.replace(/(\d+)\s*GB\s*SSD\s*(\d+)\s*TB/gi, '$1GB+$2TB');
+  remaining = remaining.replace(/(\d+)\s*G\s*SSD\s*(\d+)\s*T/gi, '$1G+$2T');
+  remaining = remaining.replace(/(\d+)\s*GB\s*SSD\s*(\d+)\s*GB/gi, '$1GB+$2GB');
+  remaining = remaining.replace(/(\d+)\s*G\s*SSD\s*(\d+)\s*G/gi, '$1G+$2G');
+  remaining = remaining.replace(/(\d+)\s*GB\s*SSD\s*(\d+)/gi, '$1GB+$2');
+  remaining = remaining.replace(/(\d+)\s*G\s*SSD\s*(\d+)/gi, '$1G+$2');
+  // 处理 SSD 直接作为分隔符的情况（如 512GBSSD1TB）
+  remaining = remaining.replace(/(\d+)\s*SSD\s*(\d+)\s*TB/gi, '$1+$2TB');
+  remaining = remaining.replace(/(\d+)\s*SSD\s*(\d+)\s*T/gi, '$1+$2T');
+  remaining = remaining.replace(/(\d+)\s*SSD\s*(\d+)\s*GB/gi, '$1+$2GB');
+  remaining = remaining.replace(/(\d+)\s*SSD\s*(\d+)\s*G/gi, '$1+$2G');
+  remaining = remaining.replace(/(\d+)\s*SSD\s*(\d+)/gi, '$1+$2');
+
+  // 再处理 TB 和 GB+GB 格式
   remaining = remaining.replace(/(\d+)\s*GBRAM\s*\+\s*(\d+)\s*TB/gi, '$1+$2T');
   remaining = remaining.replace(/(\d+)\s*GBRAM\s*\+\s*(\d+)\s*T/gi, '$1+$2T');
   remaining = remaining.replace(/(\d+)\s*GB\s*\+\s*(\d+)\s*TB/gi, '$1+$2T');
   remaining = remaining.replace(/(\d+)\s*GB\s*\+\s*(\d+)\s*T/gi, '$1+$2T');
   remaining = remaining.replace(/(\d+)\s*TB\s*\+\s*(\d+)\s*TB/gi, '$1+$2T');
   remaining = remaining.replace(/(\d+)\s*TB\s*\+\s*(\d+)\s*T/gi, '$1+$2T');
+  // 先处理 TB（但要在 SSD 处理之后，否则 1TB 会变成 1T 导致 SSD 模式不匹配）
   remaining = remaining.replace(/(\d+)\s*TB/gi, '$1T');
   // 再处理 GB+GB 格式（如 12GB+256GB -> 12+256）
   remaining = remaining.replace(/(\d+)\s*GB\s*\+\s*(\d+)\s*GB/gi, '$1+$2');
@@ -114,6 +131,23 @@ function convertToSystemFormat(skuName) {
   // 再处理普通的 GB/G
   remaining = remaining.replace(/(\d+)\s*GB/gi, '$1');
   remaining = remaining.replace(/(\d+)\s*G/gi, '$1');
+
+  // MagicBook 系列标准化 - 提取尺寸数字
+  // 输入格式：MAGICBOOKPRO16202516吋 -> MagicBookPro16
+  // 格式：MagicBookPro + 尺寸(2位) + 年份(4位) + 英寸(2位) + 吋
+  // 例如：MAGICBOOKPRO16202516吋 = MagicBookPro + 16 + 2025 + 16 + 吋
+  remaining = remaining.replace(/(MagicBookPro)(\d{2})(\d{4})(\d{1,2})吋/gi, '$1$2');
+  remaining = remaining.replace(/(MagicBookArt)(\d{2})(\d{4})(\d{1,2})吋/gi, '$1$2');
+  // 如果没有吋但有英寸
+  remaining = remaining.replace(/(MagicBookPro)(\d{2})(\d{4})(\d{1,2})英寸/gi, '$1$2');
+  remaining = remaining.replace(/(MagicBookArt)(\d{2})(\d{4})(\d{1,2})英寸/gi, '$1$2');
+  // 去除年份但保留尺寸
+  remaining = remaining.replace(/(MagicBookPro)(\d{2})(\d{4})/gi, '$1$2');
+  remaining = remaining.replace(/(MagicBookArt)(\d{2})(\d{4})/gi, '$1$2');
+  // 统一大小写
+  remaining = remaining.replace(/MagicBookPro/i, 'MagicBookPro');
+  remaining = remaining.replace(/MagicBookArt/i, 'MagicBookArt');
+  remaining = remaining.replace(/MagicBook/i, 'MagicBook');
 
   // 5. 去除后缀（注意：保留版本后缀，因为系统 SPU 名称中也包含这些）
   // 先标准化 MAGIC 系列（去除空格）
@@ -330,17 +364,46 @@ function fuzzyMatch(input, spu) {
   const inputPartNoSpace = inputPart.replace(/\s+/g, '');
   const spuPartNoSpace = spuPart.replace(/\s+/g, '');
 
+  // MagicBook 系列标准化 - 提取 MagicBookPro/Art + 尺寸数字
+  // 输入格式：magicbookpro16202516吋... -> MagicBookPro16
+  // SPU 格式：magicbookpro162025款2代... -> MagicBookPro16
+  // 注意：需要匹配到分隔符（款、吋等）并将其替换掉
+  const normalizeModelName = (str) => {
+    return str
+      // 输入格式：magicbookpro16202516吋 -> MagicBookPro16
+      // 匹配 magicbookpro + 2位尺寸 + 4位年份 + 吋/英寸/款 并替换为 MagicBookProXX
+      .replace(/magicbookpro(\d{2})\d{4}.*?(?=吋|英寸|款)/gi, 'MagicBookPro$1')
+      .replace(/magicbookart(\d{2})\d{4}.*?(?=吋|英寸|款)/gi, 'MagicBookArt$1')
+      // 去除剩余的英寸标识
+      .replace(/英寸/gi, '')
+      .replace(/吋/gi, '')
+      // 统一大小写（处理没有被上面规则匹配到的情况）
+      .replace(/magicbookpro/gi, 'MagicBookPro')
+      .replace(/magicbookart/gi, 'MagicBookArt')
+      .replace(/magicbook/gi, 'MagicBook');
+  };
+  const normalizedInput = normalizeModelName(inputPartNoSpace);
+  const normalizedSpu = normalizeModelName(spuPartNoSpace);
+
   // 按优先级排序的模式（更具体的在前）
+  // 注意：MagicBook 必须放在 MAGIC 系列模式之前，因为 MAGIC 模式会匹配 "magic" 前缀
   const modelPatterns = [
-    // MAGIC8 RSR 保时捷设计（特殊型号，需要优先匹配，且要支持无空格版本）
+    // MagicBook 系列 - 必须放在 MAGIC 通用模式之前
+    /MagicBook\s*(?:Pro|Art)\s*\d*/i,
+    /MagicBook\s*(?:Pro|Art)/i,
+    /MagicBook/i,
+    // MAGIC8 RSR 保时捷设计（特殊型号，需要优先匹配）
     /MAGIC8?RSR保时捷设计/i,
     // MAGIC 系列 - V系列：MAGICVFLIP2, MAGICVS3, MAGICV3PRO 等
     /MAGIC\s*V\s*(?:Flip\d*|Pro\d*|Air\d*|Max\d*|Ultra\d*|S\d*|\d+)*/i,
     // MAGIC 系列 - 非V系列：MAGIC8PROAIR, MAGIC8PRO, MAGIC8 等
-    /MAGIC\s*(?:\d+)?\s*(?:ProAir|Pro\d*|Air\d*|Max\d*|Ultra\d*)*/i,
-    /MAGIC\s*Book/i,
+    // 注意：这个模式使用 + 而不是 *，确保至少匹配一个字符
+    /MAGIC\s*(?:\d+)?\s*(?:ProAir|Pro\d*|Air\d*|Max\d*|Ultra\d*)+/i,
+    /MAGIC/i,
     // 手机型号 - 修复: X\d{1,} 允许1位数字如X5
-    /X\d{1,}/i,
+    // 但要排除 X5LINK 这种情况（X5后面直接跟LINK是型号的一部分）
+    /X(?!\d+LINK)\d{1,}/i,
+    /X5LINK/i,  // 单独处理 X5LINK 型号
     /V\d{1,}/i,
     /Mate\s*\d+/i,
     /P\d{2,}/i,
@@ -362,12 +425,12 @@ function fuzzyMatch(input, spu) {
   for (const pattern of modelPatterns) {
     // 找到输入的第一个匹配就停止（按优先级）
     if (!inputModel) {
-      const inputMatch = inputPartNoSpace.match(pattern);  // 使用原始字符串（去除空格后）
+      const inputMatch = normalizedInput.match(pattern);  // 使用标准化后的字符串
       if (inputMatch) {
         inputModel = inputMatch[0];
         // 如果输入匹配到了 MAGIC 系列，SPU 也必须匹配到才能继续
         if (/^MAGIC/i.test(inputModel)) {
-          const spuMagicMatch = spuPartNoSpace.match(/^MAGIC/i);
+          const spuMagicMatch = normalizedSpu.match(/^MAGIC/i);
           if (!spuMagicMatch) {
             // SPU 不是 MAGIC 开头，可能不是同类产品
             inputModel = null;
@@ -377,7 +440,7 @@ function fuzzyMatch(input, spu) {
         // 如果输入匹配到了 V 系列（如 V9、V10），SPU 也必须匹配 V 系列
         // 而不是通用的"平板"，否则认为是产品类型不匹配
         if (/^V\d+$/i.test(inputModel)) {
-          const spuVMatch = spuPartNoSpace.match(/V\d+/i);
+          const spuVMatch = normalizedSpu.match(/V\d+/i);
           if (!spuVMatch) {
             // SPU 没有匹配 V 系列（如只有"平板"），继续寻找更合适的匹配
             inputModel = null;
@@ -388,7 +451,7 @@ function fuzzyMatch(input, spu) {
     }
     // SPU 同样处理
     if (!spuModel) {
-      const spuMatch = spuPartNoSpace.match(pattern);
+      const spuMatch = normalizedSpu.match(pattern);
       if (spuMatch) {
         spuModel = spuMatch[0];
       }
@@ -416,6 +479,7 @@ function fuzzyMatch(input, spu) {
     // 如果匹配到的是通用类别（如"平板"），继续模糊匹配以找到具体型号
     // 只有当匹配到具体型号时才给分
     // 修复: 只检查 inputModel 是否等于通用类别，而不是包含
+    // 注意：MagicBookPro16 包含 "book" 但有具体型号，不应视为通用匹配
     const genericModels = ['平板', 'book', 'magic'];
     const isGenericMatch = genericModels.some(g => inputModelLower === g.toLowerCase());
 
