@@ -17,7 +17,7 @@ import { useTokenContext } from '../datahooks/auth';
 interface SearchKeywordsManagerProps {
   keywords: SpuKeyword[];
   onChange: (keywords: SpuKeyword[]) => void;
-  spuDesc?: string;
+  spuName?: string;
 }
 
 interface ExtendedKeyword extends SpuKeyword {
@@ -55,7 +55,7 @@ const generateRandomId = (): number => {
 export default function SearchKeywordsManager({
   keywords,
   onChange,
-  spuDesc,
+  spuName,
 }: SearchKeywordsManagerProps) {
   const { token } = useTokenContext();
   const [editingExternalId, setEditingExternalId] = useState<number | null>(
@@ -191,19 +191,21 @@ export default function SearchKeywordsManager({
   };
 
   const handleSmartSetKeywords = async () => {
-    if (!spuDesc) {
-      message.warning('请先填写商品描述');
+    if (!spuName) {
+      message.warning('请先填写SPU名称');
       return;
     }
     if (!token) {
       message.error('未获取到登录信息');
       return;
     }
+
     setSmartSettingLoading(true);
+
     try {
       const res = await spuSegment(
         {
-          desc: spuDesc,
+          desc: spuName,
         },
         {
           auth: token,
@@ -214,6 +216,7 @@ export default function SearchKeywordsManager({
         keywords: item.keywords,
         weight: item.weight,
       }));
+
       // 按 id 分组合并已有关键词
       const existingById = new Map<SpuKeyWordID, SpuKeyword>();
       keywords.forEach(kw => {
@@ -224,7 +227,9 @@ export default function SearchKeywordsManager({
         const existing = existingById.get(item.id);
         if (existing) {
           // 合并 keywords 并去重
-          const mergedKeywords = [...new Set([...existing.keywords, ...item.keywords])];
+          const mergedKeywords = [
+            ...new Set([...existing.keywords, ...item.keywords]),
+          ];
           existingById.set(item.id, {
             id: item.id,
             keywords: mergedKeywords,
@@ -234,6 +239,7 @@ export default function SearchKeywordsManager({
           existingById.set(item.id, item);
         }
       });
+      
       const mergedKeywords = Array.from(existingById.values());
       onChange(mergedKeywords);
       message.success('关键词获取成功');
