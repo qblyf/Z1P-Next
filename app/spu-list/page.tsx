@@ -489,11 +489,6 @@ export default function () {
   const [pageSize, setPageSize] = useState(50);
   const [total, setTotal] = useState(0);
 
-  // 初始化时加载数据
-  useEffect(() => {
-    loadData(1, pageSize);
-  }, []);
-
   // 查询参数
   const [queryParams, setQueryParams] = useState<{
     spuId?: number;
@@ -515,7 +510,7 @@ export default function () {
 
   // 获取权限
   const { permission, errMsg: permissionErrMsg } = usePermission('product-manage');
-  
+
   if (permission === undefined) {
     return <>正在加载权限</>;
   }
@@ -573,6 +568,11 @@ export default function () {
       setLoading(false);
     }
   };
+
+  // 初始化时加载数据
+  useEffect(() => {
+    loadData(1, pageSize);
+  }, []);
 
   // 处理查询
   const handleQuery = (params: typeof queryParams) => {
