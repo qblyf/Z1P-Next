@@ -1,0 +1,16 @@
+# patch-package v6.3.7
+# To apply this patch, run:
+#   patch-package @zsqk/z1-sdk
+
+diff --git a/node_modules/@zsqk/z1-sdk/es/z1p/util.js b/node_modules/@zsqk/z1-sdk/es/z1p/util.js
+index 1234567..abcdefg 100644
+--- a/node_modules/@zsqk/z1-sdk/es/z1p/util.js
++++ b/node_modules/@zsqk/z1-sdk/es/z1p/util.js
+@@ -2,7 +2,7 @@
+ let endpoint = (function() {
+ 	try {
+-		if (typeof globalThis !== "undefined" && "process" in globalThis && typeof process !== "undefined") return process.env.Z1P_ENDPOINT;
++		if (typeof globalThis !== "undefined" && "process" in globalThis && typeof process !== "undefined") return process.env.NEXT_PUBLIC_Z1P_ENDPOINT ?? process.env.Z1P_ENDPOINT;
+ 		if (typeof globalThis !== "undefined" && "Deno" in globalThis) return Deno.env.get("Z1P_ENDPOINT");
+ 	} catch (err) {
+ 		console.log("非 Node.js/Deno 环境, 没有自动初始化 endpoint", err);

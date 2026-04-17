@@ -4,7 +4,8 @@
     "dev": "next dev",
     "build": "next build || (test -d .next/server && test -f .next/BUILD_ID && echo 'Build completed with warnings' && exit 0 || exit 1)",
     "start": "next start",
-    "test": "jest"
+    "test": "jest",
+    "postinstall": "sed -i.bak 's|process\\.env\\.Z1P_ENDPOINT|process.env.NEXT_PUBLIC_Z1P_ENDPOINT ?? process.env.Z1P_ENDPOINT|g' node_modules/@zsqk/z1-sdk/es/z1p/util.js"
   },
   "engines": {
     "node": ">=18.0.0"
@@ -64,6 +65,7 @@
     "fast-check": "^4.5.3",
     "jest": "^30.2.0",
     "jest-environment-jsdom": "^30.2.0",
+    "patch-package": "^8.0.1",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.18",
     "ts-jest": "^29.4.6",
