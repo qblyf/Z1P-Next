@@ -65,6 +65,19 @@ function extractBrand(skuName) {
 }
 
 /**
+ * 去除第三方品牌前缀
+ * 例如："荣耀亲选荣耀MAGIC8PRO磁吸保护壳专供" -> "荣耀MAGIC8PRO磁吸保护壳专供"
+ */
+function removeThirdPartyPrefix(skuName) {
+  for (const prefix of THIRD_PARTY_PREFIXES) {
+    if (skuName.includes(prefix)) {
+      return skuName.replace(new RegExp(prefix, 'g'), '').trim();
+    }
+  }
+  return skuName;
+}
+
+/**
  * 将 Excel 格式转换为系统格式
  */
 function convertToSystemFormat(skuName) {
@@ -83,8 +96,11 @@ function convertToSystemFormat(skuName) {
   const brand = extractBrand(normalized);
   let remaining = normalized;
 
+  // 去除第三方品牌前缀（如"荣耀亲选"）
+  remaining = removeThirdPartyPrefix(remaining);
+
   if (brand) {
-    remaining = normalized.replace(new RegExp(`^${brand}`), '').trim();
+    remaining = remaining.replace(new RegExp(`^${brand}`), '').trim();
   }
 
   // 4. 容量标准化 - 处理顺序很重要！
@@ -271,9 +287,9 @@ function fuzzyMatch(input, spu) {
   const inputLower = input.toLowerCase();
 
   // 检查是否产品类型不匹配（手机 vs 手表 vs 平板 vs 笔记本 vs 配件）
-  // 如果输入包含手机特定关键词（如 V Flip, X70, Magic8），但SPU是手表或配件，跳过
   // 注意：magicv6 包含 magicv（Magic V系列手机）
-  const phoneKeywords = ['magicv', 'vflip', 'flip2', 'flip3', 'magic8', 'magic7', 'magic6', 'magic5', 'magic4', 'magic3', 'x70', 'x80', 'x90', 'p70', 'p60', 'mate60', 'nova', '500', 'pro'];
+  // 注意：不要用 'pro' 作为手机关键词，因为它太通用，会错误匹配配件（如"60 Pro原装保护壳"）
+  const phoneKeywords = ['magicv', 'vflip', 'flip2', 'flip3', 'magic8', 'magic7', 'magic6', 'magic5', 'magic4', 'magic3', 'x70', 'x80', 'x90', 'p70', 'p60', 'mate60', 'nova', '500'];
   const watchKeywords = ['watch', '手表', '手环'];
   const laptopKeywords = ['book', '笔记本', 'magicpad'];
   const tabletKeywords = ['平板', 'pad', 'tab'];
@@ -329,6 +345,16 @@ function fuzzyMatch(input, spu) {
   // 如果输入是平板但SPU是手表，跳过
   if (isInputTablet && isSpuWatch) {
     return { matched: false, score: 0, reason: '产品类型不匹配(平板vs手表)' };
+  }
+
+  // 如果输入包含配件关键词但SPU不包含（或反过来），跳过
+  // 这处理了 "荣耀MAGIC8PRO磁吸保护壳" 不应匹配 "荣耀60 Pro原装保护壳" 的情况
+  const accessoryCheckKeywords = ['保护壳', '膜', '肤感', '磁吸', '钢化膜', '充电器', '耳机', '智能视窗'];
+  const inputHasAccessory = accessoryCheckKeywords.some(k => inputLower.includes(k));
+  const spuHasAccessory = accessoryCheckKeywords.some(k => spuLower.includes(k));
+  if (inputHasAccessory !== spuHasAccessory) {
+    // 一个有配件关键词，一个没有，类型不匹配
+    return { matched: false, score: 0, reason: '产品类型不匹配(配件vs主产品)' };
   }
 
   // 提取输入的品牌
@@ -611,6 +637,77 @@ function fuzzyMatch(input, spu) {
           if (inputVNum !== spuVNum) {
             // MAGICV系列型号不同，不应模糊匹配
             return { matched: false, score: 0, reason: 'MAGICV型号不匹配' };
+          }
+        }
+
+        // 检查 MAGIC8 系列：提取 MAGIC8 后面的后缀进行比较
+        // 例如: MAGIC8PRO vs MAGIC8 - 如果输入是 MAGIC8PRO，SPU 是 MAGIC8 但没有 PRO 后缀，不应模糊匹配
+        // 注意：Magic3 Pro 包含 magic3，不是 magic8，所以即使有 MAGIC 前缀，也不应匹配 MAGIC8
+        const inputMagic8Match = inputModelLower.match(/^magic(8|8pro|8proair|8rsr保时捷设计)/i);
+        const spuMagic8Match = spuModelLower.match(/^magic(8|8pro|8proair|8rsr保时捷设计)/i);
+        if (inputMagic8Match && spuMagic8Match) {
+          // 两者都有 MAGIC8 前缀，检查具体型号是否匹配
+          const inputSuffix = inputMagic8Match[1].toLowerCase();
+          const spuSuffix = spuMagic8Match[1].toLowerCase();
+          if (inputSuffix !== spuSuffix) {
+            // 具体型号不同（如 MAGIC8PRO vs MAGIC8），不应模糊匹配
+            return { matched: false, score: 0, reason: 'MAGIC8型号不匹配' };
+          }
+        }
+
+        // 如果输入有 MAGIC8 前缀但 SPU 不是 MAGIC8 系列，拒绝匹配
+        if (/^magic8/i.test(inputModelLower)) {
+          if (!/^magic8/i.test(spuModelLower)) {
+            return { matched: false, score: 0, reason: 'MAGIC8 vs 非MAGIC8产品' };
+          }
+        }
+
+        // 检查配件关键词冲突：如果输入包含配件关键词（如保护壳、膜），但 SPU 不包含
+        // 这处理了 "MAGIC8PRO肤感磁吸保护壳" 不应匹配 "60 Pro原装保护壳" 的情况
+        const accessoryPatterns = ['保护壳', '膜', '肤感', '磁吸', '钢化膜', '充电器', '耳机'];
+        const hasAccessoryInInput = accessoryPatterns.some(k => inputModelLower.includes(k));
+        const hasAccessoryInSpu = accessoryPatterns.some(k => spuModelLower.includes(k));
+        if (hasAccessoryInInput && !hasAccessoryInSpu) {
+          // 输入有配件关键词但 SPU 没有，说明是产品类型不匹配
+          return { matched: false, score: 0, reason: '产品类型不匹配(主产品vs配件)' };
+        }
+        if (!hasAccessoryInInput && hasAccessoryInSpu) {
+          // SPU 有配件关键词但输入没有，说明是配件匹配主产品
+          return { matched: false, score: 0, reason: '产品类型不匹配(配件vs主产品)' };
+        }
+
+        // 如果两个都是配件（都包含配件关键词），检查它们是否属于同一个产品系列
+        // 例如：MAGIC8PRO保护壳 vs 60Pro保护壳 - 应该拒绝匹配
+        if (hasAccessoryInInput && hasAccessoryInSpu) {
+          // 提取输入中包含的产品系列标识
+          const productSeriesPatterns = [
+            /magic\s*8\s*(?:pro|proair|rsr保时捷设计)?/i,
+            /magic\s*v\s*\d*/i,
+            /magic\s*\d+/i,
+            /500\s*pro/i,
+            /60\s*pro/i,
+            /平板/i,
+            /手表/i,
+          ];
+          let inputSeries = null;
+          let spuSeries = null;
+          for (const p of productSeriesPatterns) {
+            if (!inputSeries && p.test(inputModelLower)) {
+              inputSeries = p.exec(inputModelLower)?.[0];
+            }
+            if (!spuSeries && p.test(spuModelLower)) {
+              spuSeries = p.exec(spuModelLower)?.[0];
+            }
+            if (inputSeries && spuSeries) break;
+          }
+          // 如果都找到了产品系列但不相同，拒绝匹配
+          if (inputSeries && spuSeries && inputSeries.toLowerCase() !== spuSeries.toLowerCase()) {
+            // 检查是否是包含关系（如 "magic8pro" 包含 "magic8"）
+            const normalizedInput = inputSeries.toLowerCase().replace(/\s+/g, '');
+            const normalizedSpu = spuSeries.toLowerCase().replace(/\s+/g, '');
+            if (!normalizedInput.includes(normalizedSpu) && !normalizedSpu.includes(normalizedInput)) {
+              return { matched: false, score: 0, reason: '配件产品系列不匹配' };
+            }
           }
         }
 
