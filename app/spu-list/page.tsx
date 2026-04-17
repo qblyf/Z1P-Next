@@ -489,6 +489,11 @@ export default function () {
   const [pageSize, setPageSize] = useState(50);
   const [total, setTotal] = useState(0);
 
+  // 初始化时加载数据
+  useEffect(() => {
+    loadData(1, pageSize);
+  }, []);
+
   // 查询参数
   const [queryParams, setQueryParams] = useState<{
     spuId?: number;
