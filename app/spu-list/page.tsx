@@ -552,7 +552,6 @@ export default function () {
           states: spuState ? [spuState] : [SPUState.在用],
           lonely,
           orderBy: [
-            { key: 'p."order"', sort: 'DESC' },
             { key: 'p."id"', sort: 'DESC' },
           ],
           limit: size,
