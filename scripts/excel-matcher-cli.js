@@ -21,7 +21,7 @@
  */
 
 import XLSX from 'xlsx';
-import { getSPUListNew, getSKUListJoinSPU } from '@zsqk/z1-sdk/es/z1p/product.js';
+import { getSPUListNew, getSKUListJoinSPU, getSKUList, getSKUInfo } from '@zsqk/z1-sdk/es/z1p/product.js';
 import { SPUState, SKUState } from '@zsqk/z1-sdk/es/z1p/alltypes.js';
 import { getBrandBaseList } from '@zsqk/z1-sdk/es/z1p/brand.js';
 import { init } from '@zsqk/z1-sdk/es/z1p/util.js';
@@ -43,10 +43,19 @@ const BRAND_PATTERNS = [
   { pattern: /^麦芒/, brand: '麦芒' },
 ];
 
-/**
- * 从 sku 名称中提取品牌
- */
+// 第三方品牌前缀列表（这些前缀后面跟"荣耀"或"荣耀亲选"的不是荣耀官方产品）
+const THIRD_PARTY_PREFIXES = [
+  '极选 JOESKY', '乔威', '乐坞', '联创', 'WHIZKID', 'REEPRO', 'IOTAPK', '万魔', '极选',
+  '荣耀亲选',  // 荣耀亲选是第三方品牌，不是荣耀官方
+];
+
 function extractBrand(skuName) {
+  // 先检查是否是第三方品牌（包含荣耀但不是荣耀官方）
+  for (const prefix of THIRD_PARTY_PREFIXES) {
+    if (skuName.includes(prefix + '荣耀') || skuName.includes(prefix + '荣耀亲选') || skuName.includes(prefix)) {
+      return null; // 第三方品牌，不提取荣耀
+    }
+  }
   for (const { pattern, brand } of BRAND_PATTERNS) {
     if (pattern.test(skuName)) {
       return brand;
@@ -78,16 +87,43 @@ function convertToSystemFormat(skuName) {
     remaining = normalized.replace(new RegExp(`^${brand}`), '').trim();
   }
 
-  // 4. 容量标准化
-  remaining = remaining.replace(/(\d+)\s*G\s*\+\s*(\d+)\s*G/gi, '$1+$2');
-  remaining = remaining.replace(/(\d+)G\+(\d+)G/gi, '$1+$2');
-  remaining = remaining.replace(/(\d+)\s*GB\s*\+\s*(\d+)\s*GB/gi, '$1+$2');
-  remaining = remaining.replace(/(\d+)GB\+(\d+)GB/gi, '$1+$2');
-  remaining = remaining.replace(/(\d+)GBRAM\+(\d+)TB/gi, '$1+$2T');
-  remaining = remaining.replace(/(\d+)GBRAM\+(\d+)T/gi, '$1+$2T');
+  // 4. 容量标准化 - 修复：先处理TB（防止12GB+1TB被错误匹配）
+  remaining = remaining.replace(/(\d+)\s*GBRAM\s*\+\s*(\d+)\s*TB/gi, '$1+$2T');
+  remaining = remaining.replace(/(\d+)\s*GBRAM\s*\+\s*(\d+)\s*T/gi, '$1+$2T');
+  remaining = remaining.replace(/(\d+)\s*GB\s*\+\s*(\d+)\s*TB/gi, '$1+$2T');
+  remaining = remaining.replace(/(\d+)\s*GB\s*\+\s*(\d+)\s*T/gi, '$1+$2T');
+  remaining = remaining.replace(/(\d+)\s*TB\s*\+\s*(\d+)\s*TB/gi, '$1+$2T');
+  remaining = remaining.replace(/(\d+)\s*TB\s*\+\s*(\d+)\s*T/gi, '$1+$2T');
   remaining = remaining.replace(/(\d+)\s*TB/gi, '$1T');
+  // 再处理 GB+GB 格式（如 12GB+256GB -> 12+256）
+  remaining = remaining.replace(/(\d+)\s*GB\s*\+\s*(\d+)\s*GB/gi, '$1+$2');
+  remaining = remaining.replace(/(\d+)\s*GB\s*\+\s*(\d+)\s*G/gi, '$1+$2');
+  remaining = remaining.replace(/(\d+)\s*G\s*\+\s*(\d+)\s*GB/gi, '$1+$2');
+  remaining = remaining.replace(/(\d+)\s*G\s*\+\s*(\d+)\s*G/gi, '$1+$2');
+  // 处理纯GB或纯G（不带加号的）- 但要保留 FLIP2 后面的数字
+  // FLIP2 后面如果紧跟数字，可能是容量不是型号的一部分
+  // 例如：MAGICVFLIP212GB+1TB -> MAGICVFLIP2 12+1T
+  remaining = remaining.replace(/(FLIP2)(\d+)GB/gi, '$1 $2');
+  remaining = remaining.replace(/(FLIP2)(\d+)G/gi, '$1 $2');
+  remaining = remaining.replace(/(FLIP2)(\d+)TB/gi, '$1 $2T');
+  remaining = remaining.replace(/(FLIP2)(\d+)T/gi, '$1 $2T');
+  remaining = remaining.replace(/(FLIP3)(\d+)GB/gi, '$1 $2');
+  remaining = remaining.replace(/(FLIP3)(\d+)G/gi, '$1 $2');
+  remaining = remaining.replace(/(FLIP3)(\d+)TB/gi, '$1 $2T');
+  remaining = remaining.replace(/(FLIP3)(\d+)T/gi, '$1 $2T');
+  // 再处理普通的 GB/G
+  remaining = remaining.replace(/(\d+)\s*GB/gi, '$1');
+  remaining = remaining.replace(/(\d+)\s*G/gi, '$1');
 
   // 5. 去除后缀（注意：保留版本后缀，因为系统 SPU 名称中也包含这些）
+  // 先标准化 MAGIC 系列（去除空格）
+  remaining = remaining.replace(/MAGIC\s*8\s*RSR\s*保时捷设计/gi, 'MAGIC8RSR保时捷设计');
+  remaining = remaining.replace(/MAGIC\s*8\s*PROAIR/gi, 'MAGIC8PROAIR');
+  remaining = remaining.replace(/MAGIC\s*8\s*PRO/gi, 'MAGIC8PRO');
+  remaining = remaining.replace(/MAGIC\s*8/gi, 'MAGIC8');
+  remaining = remaining.replace(/MAGIC\s*V\s*FLIP(\d*)/gi, 'MAGICVFLIP$1');
+  remaining = remaining.replace(/MAGIC\s*V\s*(\d)/gi, 'MAGICV$1');
+  remaining = remaining.replace(/MAGIC\s*Book/gi, 'MAGICBook');
   const suffixPatterns = [
     /零售样机/gi, /样机/gi,
     /双卡全网通版/gi, /双卡全网通/gi, /全网通版/gi, /全网通/gi, /双卡版/gi, /单卡版/gi,
@@ -177,9 +213,25 @@ function fuzzyMatch(input, spu) {
   const isInputAccessory = accessoryKeywords.some(k => input.toLowerCase().includes(k));
   const isSpuAccessory = accessoryKeywords.some(k => spuLower.includes(k));
 
-  // 如果输入不是配件，但SPU是配件，跳过
-  if (!isInputAccessory && isSpuAccessory) {
-    return { matched: false, score: 0, reason: 'SPU是配件' };
+  // 如果输入是配件（保护壳、膜、充电器等），但 SPU 是手机/平板等主产品（不是配件），跳过
+  // 这处理了 "荣耀MAGIC8PRO磁吸保护壳" 不应匹配 "荣耀Magic3 Pro" 的情况
+  if (isInputAccessory) {
+    // 判断 SPU 是否是配件（看 SPU 名称中是否包含配件关键词）
+    const accessoryInSpu = accessoryKeywords.some(k => spuLower.includes(k));
+    // 如果 SPU 是主产品（不是配件），跳过
+    if (!accessoryInSpu) {
+      return { matched: false, score: 0, reason: 'SPU是主产品（非配件）' };
+    }
+  }
+
+  // 如果输入是配件，优先匹配配件 SPU
+  // 配件 SPU 通常名称中包含：保护壳、保护膜、肤感磁吸、磁吸保护壳等
+  let accessoryBoost = 0;
+  if (isInputAccessory) {
+    const hasAccessoryWordInSpu = accessoryKeywords.some(k => spuLower.includes(k));
+    if (hasAccessoryWordInSpu) {
+      accessoryBoost = 0.2; // 配件匹配配件，给一定加分
+    }
   }
 
   const inputLower = input.toLowerCase();
@@ -280,6 +332,8 @@ function fuzzyMatch(input, spu) {
 
   // 按优先级排序的模式（更具体的在前）
   const modelPatterns = [
+    // MAGIC8 RSR 保时捷设计（特殊型号，需要优先匹配，且要支持无空格版本）
+    /MAGIC8?RSR保时捷设计/i,
     // MAGIC 系列 - V系列：MAGICVFLIP2, MAGICVS3, MAGICV3PRO 等
     /MAGIC\s*V\s*(?:Flip\d*|Pro\d*|Air\d*|Max\d*|Ultra\d*|S\d*|\d+)*/i,
     // MAGIC 系列 - 非V系列：MAGIC8PROAIR, MAGIC8PRO, MAGIC8 等
@@ -734,7 +788,7 @@ function fuzzyMatch(input, spu) {
     exactBonus += 0.2;
   }
 
-  const finalScore = Math.min(baseScore + exactBonus, 1.0);
+  const finalScore = Math.min(baseScore + exactBonus + accessoryBoost, 1.0);
 
   if (finalScore > 0.6) {
     return { matched: true, score: finalScore, reason: '模糊匹配' };
@@ -794,19 +848,66 @@ async function findSpuByGtin(gtin, skuCache) {
     );
 
     if (skuList && skuList.length > 0) {
-      // API 返回的是扁平结构，sku.name 是 SKU 名称，spu.name 是 SPU 名称
-      const sku = skuList[0];
+      // 优先找没有 "-弃用-" 的 SKU
+      let validSku = skuList.find(sku => !sku.name.includes('-弃用-'));
+
+      // 如果没找到，用 getSKUInfo 验证每个 SKU
+      if (!validSku) {
+        for (const sku of skuList) {
+          try {
+            const skuInfo = await getSKUInfo(sku.id);
+            if (skuInfo && !skuInfo.name.includes('-弃用-')) {
+              validSku = sku;
+              break;
+            }
+          } catch (e) {
+            // getSKUInfo 失败说明是幽灵数据，尝试用 spuID 找同 SPU 下的其他真实 SKU
+            console.log(`[GTIN ${gtin}] SKU ${sku.id} 是幽灵数据，尝试通过 SPU ID ${sku.spuID} 查找其他真实 SKU`);
+            try {
+              // 查找同 SPU 下的其他 SKU，看是否有真实存在的
+              const otherSkuList = await getSKUList(
+                { states: [SKUState.在用], spuIDs: [sku.spuID], limit: 50 },
+                ['id', 'name', 'gtins', 'spuID']
+              );
+              for (const otherSku of otherSkuList) {
+                try {
+                  const otherSkuInfo = await getSKUInfo(otherSku.id);
+                  if (otherSkuInfo && otherSkuInfo.gtins && otherSkuInfo.gtins.includes(gtin)) {
+                    console.log(`[GTIN ${gtin}] 通过 SPU ID ${sku.spuID} 找到真实 SKU: ${otherSkuInfo.id}`);
+                    validSku = {
+                      id: otherSkuInfo.id,
+                      name: otherSkuInfo.name,
+                      gtins: otherSkuInfo.gtins,
+                      spuID: otherSkuInfo.spuID,
+                    };
+                    break;
+                  }
+                } catch (e2) {
+                  // 继续找下一个
+                }
+              }
+            } catch (e2) {
+              console.log(`[GTIN ${gtin}] 通过 SPU 查找也失败`);
+            }
+            if (validSku) break;
+          }
+        }
+      }
+
+      if (!validSku) {
+        return null;
+      }
       const result = {
-        skuId: sku.id,
-        skuName: sku.name, // SKU 名称
-        spuId: sku.spuID,
-        spuName: sku.spu?.name || sku.name, // SPU 名称（优先使用 spu.name）
-        spuBrand: sku.spu?.brand || sku.brand, // SPU 品牌
-        gtins: sku.gtins,
+        skuId: validSku.id,
+        skuName: validSku.name, // SKU 名称
+        spuId: validSku.spuID,
+        spuName: validSku.name, // SPU 名称（使用 SKU 名称，因为可能没有 spu 信息）
+        spuBrand: '', // 通过 SPU 查找时没有品牌信息，后续可以优化
+        gtins: validSku.gtins,
         // SKU 规格信息
-        colorValue: sku.colorValue,
-        specValue: sku.specValue,
-        comboValue: sku.comboValue,
+        colorValue: validSku.colorValue,
+        specValue: validSku.specValue,
+        comboValue: validSku.comboValue,
       };
       skuCache.set(gtin, result);
       return result;
