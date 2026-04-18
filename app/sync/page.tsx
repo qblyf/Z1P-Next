@@ -43,36 +43,45 @@ function ClientPage() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [disabled, setDisabled] = useState(false);
 
-  // 账套列表 - 使用默认列表
-  const defaultTenants = [
-    { id: 'newgy', tenantID: 'newgy', clientName: '高远控股' },
-    { id: 'gx', tenantID: 'gx', clientName: '广西' },
-    { id: 'zsqk', tenantID: 'zsqk', clientName: '中晟' },
-    { id: 'gy', tenantID: 'gy', clientName: '高远' },
-    { id: 'gx0775', tenantID: 'gx0775', clientName: '广西0775' },
-    { id: 'haombo', tenantID: 'haombo', clientName: '好博' },
-    { id: 'zsqkp', tenantID: 'zsqkp', clientName: '中晟科普' },
-    { id: 'jcxiaomi', tenantID: 'jcxiaomi', clientName: '金昌小米' },
-    { id: 'llxiaomi', tenantID: 'llxiaomi', clientName: '临洮小米' },
-    { id: 'baicheng', tenantID: 'baicheng', clientName: '白城' },
-    { id: 'jiyuandixintong', tenantID: 'jiyuandixintong', clientName: '济源迪信通' },
-    { id: 'changfasm', tenantID: 'changfasm', clientName: '长发商贸' },
-    { id: 'pingnuo', tenantID: 'pingnuo', clientName: '苹诺' },
-    { id: 'kaisheng', tenantID: 'kaisheng', clientName: '凯盛' },
-    { id: 'linji', tenantID: 'linji', clientName: '临济' },
-    { id: 'sulian', tenantID: 'sulian', clientName: '苏联' },
-    { id: 'znyxt', tenantID: 'znyxt', clientName: '智能云系统' },
-    { id: 'hwyxt', tenantID: 'hwyxt', clientName: '华为云系统' },
-    { id: 'xmyxt', tenantID: 'xmyxt', clientName: '小米云系统' },
-    { id: 'pgyxt', tenantID: 'pgyxt', clientName: '苹果云系统' },
-    { id: 'yysyxt', tenantID: 'yysyxt', clientName: '应用商业系统' },
-  ];
-
-  const [tenantList, setTenantList] = useState(defaultTenants);
+  // 账套列表
+  const [tenantList, setTenantList] = useState<Array<{
+    id: string;
+    tenantID: string;
+    clientName: string;
+  }>>([]);
 
   // 选中的账套列表
-  const [selectedTenants, setSelectedTenants] = useState<string[]>(defaultTenants.map(t => t.tenantID));
+  const [selectedTenants, setSelectedTenants] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(true);
+
+  // 获取账套列表
+  useEffect(() => {
+    if (!token) return;
+
+    // 从 sys-setting API 获取账套列表
+    fetch(`/api/tenants?token=${encodeURIComponent(token)}`)
+      .then(res => res.json())
+      .then(result => {
+        if (!result.success) {
+          throw new Error(result.message || '获取账套列表失败');
+        }
+
+        // 使用 API 返回的 tenantID
+        const tenants = result.data.map((v: any) => ({
+          id: v.tenantID,
+          tenantID: v.tenantID,
+          clientName: v.name
+        }));
+
+        setTenantList(tenants);
+        setSelectedTenants(tenants.map((t: any) => t.tenantID));
+        setSelectAll(true);
+      })
+      .catch(err => {
+        console.error('获取账套列表失败:', err);
+        setMsg(`获取账套列表失败: ${err.message}`);
+      });
+  }, [token]);
 
   // 处理全选/取消全选
   const handleSelectAll = (checked: boolean) => {
