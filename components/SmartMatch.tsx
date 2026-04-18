@@ -52,7 +52,7 @@ export default function SmartMatch() {
     current: number;
     total: number;
     currentItem: string;
-    results: UIMatchResult[];
+    results: UIMatchResult[] | null;
   } | null>(null);
 
   // Excel 导入相关状态
@@ -117,28 +117,33 @@ export default function SmartMatch() {
     setLoading(true);
     setResults([]);
     setCurrentPage(1);
+
+    // 创建输入到原始数据的映射
+    const inputToRowMap = createInputToRowMapGeneric(rows);
+    const inputs = Array.from(inputToRowMap.keys());
+
+    console.log(`[Excel匹配] 开始匹配 ${inputs.length} 条数据`);
+
+    // 进度状态
+    let currentProgress = 0;
+    let currentItem = '';
+
     setMatchProgress({
       current: 0,
-      total: rows.length,
+      total: inputs.length,
       currentItem: '',
-      results: []
+      results: null
     });
 
     try {
-      // 创建输入到原始数据的映射
-      const inputToRowMap = createInputToRowMapGeneric(rows);
-
-      // 提取需要匹配的输入数组
-      const inputs = Array.from(inputToRowMap.keys());
-
-      console.log(`[Excel匹配] 开始匹配 ${inputs.length} 条数据`);
-
       // 用于存储实时结果
       const realTimeResults: UIMatchResult[] = [];
 
       // 使用 MatchingOrchestrator 进行批量匹配（带进度回调）
       const batchResult = await orchestrator.batchMatch(inputs, (currentIndex, totalCount, currentInput, result) => {
-        // 转换当前结果
+        currentProgress = currentIndex;
+        currentItem = currentInput.length > 30 ? currentInput.substring(0, 30) + '...' : currentInput;
+
         if (result) {
           const originalRow = inputToRowMap.get(currentInput);
           const uiResult: UIMatchResult = {
@@ -155,19 +160,17 @@ export default function SmartMatch() {
             status: result.status as 'matched' | 'unmatched' | 'spu-matched',
           };
           realTimeResults.push(uiResult);
+        }
 
-          // 更新进度状态
+        // 每5条或最后一条更新一次UI
+        if (currentIndex % 5 === 0 || currentIndex === totalCount) {
+          setResults([...realTimeResults]);
           setMatchProgress({
-            current: currentIndex,
+            current: currentProgress,
             total: totalCount,
-            currentItem: currentInput.length > 30 ? currentInput.substring(0, 30) + '...' : currentInput,
-            results: [...realTimeResults]
+            currentItem: currentItem,
+            results: null
           });
-
-          // 每5条更新一次结果显示
-          if (currentIndex % 5 === 0 || currentIndex === totalCount) {
-            setResults([...realTimeResults]);
-          }
         }
       });
 
@@ -286,11 +289,15 @@ export default function SmartMatch() {
 
     const lines = inputText.split('\n').filter(line => line.trim());
 
+    // 进度状态（不包含results，避免频繁更新）
+    let currentProgress = 0;
+    let currentItem = '';
+
     setMatchProgress({
       current: 0,
       total: lines.length,
       currentItem: '',
-      results: []
+      results: null
     });
 
     try {
@@ -299,6 +306,9 @@ export default function SmartMatch() {
 
       // 使用 MatchingOrchestrator 进行批量匹配（带进度回调）
       const batchResult = await orchestrator.batchMatch(lines, (currentIndex, totalCount, currentInput, result) => {
+        currentProgress = currentIndex;
+        currentItem = currentInput.length > 30 ? currentInput.substring(0, 30) + '...' : currentInput;
+
         if (result) {
           const uiResult: UIMatchResult = {
             inputName: result.inputName,
@@ -313,17 +323,17 @@ export default function SmartMatch() {
             status: result.status as 'matched' | 'unmatched' | 'spu-matched',
           };
           realTimeResults.push(uiResult);
+        }
 
+        // 每5条或最后一条更新一次UI
+        if (currentIndex % 5 === 0 || currentIndex === totalCount) {
+          setResults([...realTimeResults]);
           setMatchProgress({
-            current: currentIndex,
+            current: currentProgress,
             total: totalCount,
-            currentItem: currentInput.length > 30 ? currentInput.substring(0, 30) + '...' : currentInput,
-            results: [...realTimeResults]
+            currentItem: currentItem,
+            results: null
           });
-
-          if (currentIndex % 5 === 0 || currentIndex === totalCount) {
-            setResults([...realTimeResults]);
-          }
         }
       });
 

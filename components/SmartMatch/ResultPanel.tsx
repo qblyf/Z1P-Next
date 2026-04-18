@@ -29,7 +29,7 @@ interface MatchProgress {
   current: number;
   total: number;
   currentItem: string;
-  results: UIMatchResult[];
+  results: UIMatchResult[] | null;
 }
 
 interface ResultPanelProps {
@@ -58,8 +58,9 @@ export function ResultPanel({
   // 显示匹配进度状态
   if (matchProgress && matchProgress.total > 0) {
     const percent = Math.round((matchProgress.current / matchProgress.total) * 100);
-    const matchedCount = matchProgress.results.filter(r => r.status === 'matched').length;
-    const unmatchedCount = matchProgress.results.filter(r => r.status === 'unmatched').length;
+    // 使用传入的results而不是matchProgress.results
+    const matchedCount = results.filter(r => r.status === 'matched').length;
+    const unmatchedCount = results.filter(r => r.status === 'unmatched').length;
 
     return (
       <Card
@@ -109,7 +110,7 @@ export function ResultPanel({
           {/* 实时结果表格 */}
           <div className="flex-1 overflow-auto">
             <ResultTable
-              results={matchProgress.results}
+              results={results}
               brandList={brandList}
               visibleColumns={visibleColumns}
               currentPage={currentPage}
