@@ -35,6 +35,14 @@ export async function POST(request: Request) {
       body: JSON.stringify(syncParams)
     });
 
+    // 检查响应类型
+    const contentType = res.headers.get('content-type');
+    if (!contentType?.includes('application/json')) {
+      const text = await res.text();
+      console.error('❌ API返回非JSON响应:', text.substring(0, 500));
+      throw new Error(`API返回了错误的响应格式: ${res.status} ${text.substring(0, 100)}`);
+    }
+
     const data = await res.json();
 
     if (data.errMsg) {
