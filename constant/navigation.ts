@@ -67,6 +67,12 @@ export const MENU_CONFIG: MenuItem[] = [
         href: '/table-match',
         icon: 'Table',
       },
+      {
+        id: 'gtin-query',
+        label: '69码批量查询',
+        href: '/gtin-query',
+        icon: 'Barcode',
+      },
     ],
   },
   {

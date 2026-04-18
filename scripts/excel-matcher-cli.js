@@ -47,6 +47,7 @@ const BRAND_PATTERNS = [
 const THIRD_PARTY_PREFIXES = [
   '极选 JOESKY', '乔威', '乐坞', '联创', 'WHIZKID', 'REEPRO', 'IOTAPK', '万魔', '极选',
   '荣耀亲选',  // 荣耀亲选是第三方品牌，不是荣耀官方
+  '思派力',     // 荣耀思派力是第三方品牌，不是荣耀官方
 ];
 
 function extractBrand(skuName) {
@@ -119,34 +120,44 @@ function convertToSystemFormat(skuName) {
   remaining = remaining.replace(/(\d+)\s*SSD\s*(\d+)\s*G/gi, '$1+$2G');
   remaining = remaining.replace(/(\d+)\s*SSD\s*(\d+)/gi, '$1+$2');
 
-  // 再处理 TB 和 GB+GB 格式
+  // 先处理 FLIP/MAGICV 系列的 GB+TB 格式（必须在 TB 替换之前）
+  remaining = remaining.replace(/MAGICVFLIP(\d)(\d{2})GB\+(\d+)TB/gi, 'MAGICVFLIP$1$2+$3T');
+  remaining = remaining.replace(/MAGICV(\d)(\d{2})GB\+(\d+)TB/gi, 'MAGICV$1$2+$3T');
+  remaining = remaining.replace(/MAGICVFLIP(\d)(\d{2})RAM\+(\d+)TB/gi, 'MAGICVFLIP$1$2+$3T');
+  remaining = remaining.replace(/MAGICV(\d)(\d{2})RAM\+(\d+)TB/gi, 'MAGICV$1$2+$3T');
+  // 先处理 TB（但要在 SSD 处理之后，否则 1TB 会变成 1T 导致 SSD 模式不匹配）
+  remaining = remaining.replace(/(\d+)\s*TB(?![\d])/gi, '$1T');  // TB后面不是数字
+  // 再处理 GB+GB 格式（如 12GB+256GB -> 12+256）
+  remaining = remaining.replace(/(\d+)\s*GB\+\s*(\d+)\s*GB/gi, '$1+$2');
+  remaining = remaining.replace(/(\d+)\s*GB\+\s*(\d+)\s*G/gi, '$1+$2');
+  remaining = remaining.replace(/(\d+)\s*G\+\s*(\d+)\s*GB/gi, '$1+$2');
+  remaining = remaining.replace(/(\d+)\s*G\+\s*(\d+)\s*G/gi, '$1+$2');
+  // 处理 GBRAM+TB 格式
   remaining = remaining.replace(/(\d+)\s*GBRAM\s*\+\s*(\d+)\s*TB/gi, '$1+$2T');
   remaining = remaining.replace(/(\d+)\s*GBRAM\s*\+\s*(\d+)\s*T/gi, '$1+$2T');
-  remaining = remaining.replace(/(\d+)\s*GB\s*\+\s*(\d+)\s*TB/gi, '$1+$2T');
-  remaining = remaining.replace(/(\d+)\s*GB\s*\+\s*(\d+)\s*T/gi, '$1+$2T');
-  remaining = remaining.replace(/(\d+)\s*TB\s*\+\s*(\d+)\s*TB/gi, '$1+$2T');
-  remaining = remaining.replace(/(\d+)\s*TB\s*\+\s*(\d+)\s*T/gi, '$1+$2T');
-  // 先处理 TB（但要在 SSD 处理之后，否则 1TB 会变成 1T 导致 SSD 模式不匹配）
-  remaining = remaining.replace(/(\d+)\s*TB/gi, '$1T');
-  // 再处理 GB+GB 格式（如 12GB+256GB -> 12+256）
-  remaining = remaining.replace(/(\d+)\s*GB\s*\+\s*(\d+)\s*GB/gi, '$1+$2');
-  remaining = remaining.replace(/(\d+)\s*GB\s*\+\s*(\d+)\s*G/gi, '$1+$2');
-  remaining = remaining.replace(/(\d+)\s*G\s*\+\s*(\d+)\s*GB/gi, '$1+$2');
-  remaining = remaining.replace(/(\d+)\s*G\s*\+\s*(\d+)\s*G/gi, '$1+$2');
-  // 处理纯GB或纯G（不带加号的）- 但要保留 FLIP2 后面的数字
-  // FLIP2 后面如果紧跟数字，可能是容量不是型号的一部分
-  // 例如：MAGICVFLIP212GB+1TB -> MAGICVFLIP2 12+1T
-  remaining = remaining.replace(/(FLIP2)(\d+)GB/gi, '$1 $2');
-  remaining = remaining.replace(/(FLIP2)(\d+)G/gi, '$1 $2');
-  remaining = remaining.replace(/(FLIP2)(\d+)TB/gi, '$1 $2T');
-  remaining = remaining.replace(/(FLIP2)(\d+)T/gi, '$1 $2T');
-  remaining = remaining.replace(/(FLIP3)(\d+)GB/gi, '$1 $2');
-  remaining = remaining.replace(/(FLIP3)(\d+)G/gi, '$1 $2');
-  remaining = remaining.replace(/(FLIP3)(\d+)TB/gi, '$1 $2T');
-  remaining = remaining.replace(/(FLIP3)(\d+)T/gi, '$1 $2T');
+  // 处理纯GB或纯G（不带加号的）- 但要保留 FLIP2/FLIP3/MAGICV 后面的数字作为容量
+  // MAGICVFLIP212GB+1TB -> MAGICVFLIP2 12+1T (FLIP2是型号，12是RAM，1T是ROM)
+  // 先用特定模式处理 MAGICVFLIP2/FLIP3 后面紧跟数字+GB/TB 的情况
+  remaining = remaining.replace(/MAGICVFLIP(\d)RAM?(\d+)GB/gi, 'MAGICVFLIP$1 $2');              // MAGICVFLIP212GB -> MAGICVFLIP2 12
+  remaining = remaining.replace(/MAGICVFLIP(\d)(\d{1,2})/gi, 'MAGICVFLIP$1 $2');              // MAGICVFLIP212 -> MAGICVFLIP2 12 (fallback)
+  remaining = remaining.replace(/MAGICV(\d)(\d{2})RAM?(\d+)GB/gi, 'MAGICV$1 $2 $3');           // MAGICV616GB -> MAGICV6 16
+  remaining = remaining.replace(/MAGICV(\d)(\d{2})/gi, 'MAGICV$1 $2');
   // 再处理普通的 GB/G
   remaining = remaining.replace(/(\d+)\s*GB/gi, '$1');
   remaining = remaining.replace(/(\d+)\s*G/gi, '$1');
+
+  // FLIP/V 系列容量分离后修复空格
+  // 处理 "MAGICVFLIP212+1T" -> "MAGICVFLIP2 12+1T"
+  // 格式：MAGICVFLIP + 1位数字(2) + 2位数字(12) + + + 1位数字(1) + T
+  remaining = remaining.replace(/MAGICVFLIP(\d)(\d{2})\+(\d{1,2})T/gi, 'MAGICVFLIP$1 $2+$3T');
+  // 处理 "MAGICVFLIP212GB+1TB" -> "MAGICVFLIP2 12+1T" (after GB/TB removal)
+  remaining = remaining.replace(/MAGICVFLIP(\d)(\d{2})\+(\d{1,2})/gi, 'MAGICVFLIP$1 $2+$3');
+  // 处理 "MAGICVFLIP212" -> "MAGICVFLIP2 12" (no capacity)
+  remaining = remaining.replace(/MAGICVFLIP(\d)(\d{2})/gi, 'MAGICVFLIP$1 $2');
+  // 类似处理 MAGICV (如 MAGICV616 -> MAGICV6 16)
+  remaining = remaining.replace(/MAGICV(\d)(\d{2})\+(\d{1,2})T/gi, 'MAGICV$1 $2+$3T');
+  remaining = remaining.replace(/MAGICV(\d)(\d{2})\+(\d{1,2})/gi, 'MAGICV$1 $2+$3');
+  remaining = remaining.replace(/MAGICV(\d)(\d{2})/gi, 'MAGICV$1 $2');
 
   // MagicBook 系列标准化 - 提取尺寸数字
   // 输入格式：MAGICBOOKPRO16202516吋 -> MagicBookPro16
@@ -328,6 +339,27 @@ function fuzzyMatch(input, spu) {
     if (spuIsEarphone) {
       return { matched: false, score: 0, reason: '产品类型不匹配(手表vs耳机)' };
     }
+    // 如果输入是"手表+表带"（如"X5LINK+皮表带"），但SPU是"手表X5"（纯手表，无表带）
+    // 或者SPU是纯表带配件，不应该匹配
+    // 因为输入实际上是在找完整的"手表X5"（可能是带颜色的 variants），而不是表带配件
+    const isInputWatchWithAccessory = watchAccessoryKeywords.some(k => inputLower.includes(k));
+    const isSpuWatchOnly = watchKeywords.some(k => spuLower.includes(k)) && !watchAccessoryKeywords.some(k => spuLower.includes(k));
+    const spuIsAccessoryOnly = watchAccessoryKeywords.some(k => spuLower.includes(k)) && !watchKeywords.some(k => spuLower.includes(k));
+    if (isInputWatchWithAccessory && (isSpuWatchOnly || spuIsAccessoryOnly)) {
+      // 输入是"手表+表带"，但SPU是纯手表或纯表带，不匹配
+      // 应该继续寻找真正的"手表X5"（带颜色）SPU
+      return { matched: false, score: 0, reason: '产品类型不匹配(手表+表带vs纯手表/表带)' };
+    }
+
+    // 如果输入是"手表+表带"（如"手表X5LINK+皮表带"），应该匹配纯手表主产品
+    // 而不是匹配"手表+表带"配件（即使该配件也有颜色）
+    // 例如：输入"手表X5LINK+皮表带 星光白"应匹配"手表X5 星光白"，而非"手表X5+表带"
+    if (isInputWatchWithAccessory) {
+      // 如果SPU有表带关键词（说明是手表+表带配件），拒绝匹配
+      if (watchAccessoryKeywords.some(k => spuLower.includes(k))) {
+        return { matched: false, score: 0, reason: '产品类型不匹配(手表+表带vs表带配件)' };
+      }
+    }
   }
 
   // 如果输入是手机但SPU是手表，跳过
@@ -349,12 +381,44 @@ function fuzzyMatch(input, spu) {
 
   // 如果输入包含配件关键词但SPU不包含（或反过来），跳过
   // 这处理了 "荣耀MAGIC8PRO磁吸保护壳" 不应匹配 "荣耀60 Pro原装保护壳" 的情况
-  const accessoryCheckKeywords = ['保护壳', '膜', '肤感', '磁吸', '钢化膜', '充电器', '耳机', '智能视窗'];
+  const accessoryCheckKeywords = ['保护壳', '膜', '肤感', '磁吸', '钢化膜', '充电器', '耳机', '智能视窗', '包', '袋', '表带', '刷头', '支架', '贴纸', '防护壳'];
   const inputHasAccessory = accessoryCheckKeywords.some(k => inputLower.includes(k));
   const spuHasAccessory = accessoryCheckKeywords.some(k => spuLower.includes(k));
   if (inputHasAccessory !== spuHasAccessory) {
     // 一个有配件关键词，一个没有，类型不匹配
     return { matched: false, score: 0, reason: '产品类型不匹配(配件vs主产品)' };
+  }
+
+  // 如果输入和SPU都有配件关键词，检查具体的配件类型是否匹配
+  // 例如：输入是"膜"但SPU是"壳"，不应该匹配（都是配件但类型不同）
+  const accessoryTypeKeywords = {
+    '膜': ['膜', '钢化膜', '贴膜', '镜头膜', '修复膜', '护眼膜'],
+    '壳': ['壳', '保护壳', '手机壳', '皮壳', '素皮壳', '磁吸壳'],
+    '包': ['包', '袋'],
+    '表带': ['表带', '表链'],
+    '充电器': ['充电器', '充电头', '充电线', '适配器'],
+    '耳机': ['耳机', '耳塞', '耳罩'],
+    '支架': ['支架', '支撑架', '桌面支架'],
+    '刷头': ['刷头', '牙刷头'],
+  };
+
+  // 检查输入和SPU的具体配件类型
+  const getAccessoryType = (str) => {
+    for (const [type, keywords] of Object.entries(accessoryTypeKeywords)) {
+      if (keywords.some(k => str.includes(k))) {
+        return type;
+      }
+    }
+    return null;
+  };
+
+  const inputAccessoryType = getAccessoryType(inputLower);
+  const spuAccessoryType = getAccessoryType(spuLower);
+
+  // 如果两者都有配件类型但类型不同，拒绝匹配
+  // 例如：输入"膜"但SPU是"壳"，这是配件子类型不匹配
+  if (inputAccessoryType && spuAccessoryType && inputAccessoryType !== spuAccessoryType) {
+    return { matched: false, score: 0, reason: `配件类型不匹配(${inputAccessoryType}vs${spuAccessoryType})` };
   }
 
   // 提取输入的品牌
@@ -421,7 +485,8 @@ function fuzzyMatch(input, spu) {
     // MAGIC8 RSR 保时捷设计（特殊型号，需要优先匹配）
     /MAGIC8?RSR保时捷设计/i,
     // MAGIC 系列 - V系列：MAGICVFLIP2, MAGICVS3, MAGICV3PRO 等
-    /MAGIC\s*V\s*(?:Flip\d*|Pro\d*|Air\d*|Max\d*|Ultra\d*|S\d*|\d+)*/i,
+    // 注意：S 后必须跟数字，如 VS3 而非 Vs（Vs 是单独的型号）
+    /MAGIC\s*V\s*(?:Flip\d*|Pro\d*|Air\d*|Max\d*|Ultra\d*|S\d+|\d+)*/i,
     // MAGIC 系列 - 非V系列：MAGIC8PROAIR, MAGIC8PRO, MAGIC8 等
     // 注意：这个模式使用 + 而不是 *，确保至少匹配一个字符
     /MAGIC\s*(?:\d+)?\s*(?:ProAir|Pro\d*|Air\d*|Max\d*|Ultra\d*)+/i,
@@ -455,12 +520,22 @@ function fuzzyMatch(input, spu) {
       if (inputMatch) {
         inputModel = inputMatch[0];
         // 如果输入匹配到了 MAGIC 系列，SPU 也必须匹配到才能继续
+        // 修改：如果 SPU 没有以 MAGIC 开头，但包含 Magic/原装 等，说明可能匹配到的是配件
+        // 这种情况应该继续尝试其他模式而不是直接拒绝
         if (/^MAGIC/i.test(inputModel)) {
           const spuMagicMatch = normalizedSpu.match(/^MAGIC/i);
           if (!spuMagicMatch) {
-            // SPU 不是 MAGIC 开头，可能不是同类产品
+            // SPU 不是 MAGIC 开头
+            // 检查输入模型是否是具体的 MAGIC 型号（不是只有 "MAGIC"）
+            // 如果输入是 "MAGIC8PRO"、"MAGICV6" 等具体型号，但 SPU 没有 MAGIC，拒绝匹配
+            if (/^MAGIC\s*\d+/i.test(inputModel) || /^MAGIC\s*V/i.test(inputModel)) {
+              // 输入是具体的 MAGIC 型号（如 MAGIC8PRO、MAGICV6），但 SPU 没有 MAGIC
+              // 这表示产品类型不匹配（如 MAGIC8PRO 平板电脑 vs 60 Pro 手机）
+              return { matched: false, score: 0, reason: 'MAGIC系列具体型号但SPU无MAGIC' };
+            }
+            // 如果输入只是通用的 "MAGIC"，继续尝试其他模式
             inputModel = null;
-            break;
+            continue;
           }
         }
         // 如果输入匹配到了 V 系列（如 V9、V10），SPU 也必须匹配 V 系列
@@ -497,10 +572,46 @@ function fuzzyMatch(input, spu) {
     }
   }
 
+  // 检查是否是配件（独立于 inputModel/spuModel 检查）
+  // 当输入包含 MAGIC V/FLIP 型号但 SPU 是配件时，即使 model extraction 没有提取到，也要拒绝
+  // 注意：使用 inputPartNoSpace 和 spuPartNoSpace 进行检查，因为原始名称可能有空格
+  if (/magicv(?:flip\d+)/i.test(inputPartNoSpace)) {
+    // 输入有具体的 MAGIC V/FLIP 型号（如 MAGICVFLIP2，不是 MAGICVFLIP 后面没数字）
+    // 检查 SPU 是否也包含具体的 FLIP 型号
+    if (!/magicvflip\d+/i.test(spuPartNoSpace)) {
+      // SPU 或者不包含 FLIP，或者只有 MAGICVFLIP 没有具体数字
+      // 如果 SPU 包含配件关键词（包、袋、壳等），拒绝匹配
+      if (/包|袋|MINI/i.test(spuPart)) {
+        return { matched: false, score: 0, reason: 'MAGICVFLIP具体型号不匹配配件(inputPartNoSpace检查)' };
+      }
+    }
+  }
+  if (/magicv(?:flip\d*|v?\d+)/i.test(inputPartNoSpace)) {
+    // 输入有具体的 MAGIC V/FLIP 型号
+    // 检查 SPU 是否包含具体的 MAGIC V/FLIP 型号，如果没有，很可能是配件
+    // 只有当 SPU 也包含具体的 MAGIC V/FLIP 型号时才允许匹配
+    if (!/magicv(?:flip\d*|v?\d+)/i.test(spuPartNoSpace)) {
+      // SPU 不包含 MAGIC V/FLIP 型号，拒绝匹配
+      // 这处理了 "MAGICVFLIP2" 不应匹配 "Magic-Pencil 3" 等配件的情况
+      return { matched: false, score: 0, reason: 'MAGICVFLIP型号不匹配(inputPartNoSpace检查)' };
+    }
+  }
+
   if (inputModel && spuModel) {
     // 检查模型是否完整匹配（不能只是一个前缀）
     const inputModelLower = inputModel.toLowerCase();
     const spuModelLower = spuModel.toLowerCase();
+
+    // 如果 input 有特定的 MAGIC V/FLIP 型号（如 magicvflip212, magicv6），但 SPU 只有通用的 "magic"
+    // 可能是匹配到了配件（如"原装 Magic 悬浮键盘保护套"），应该拒绝
+    // 检查 inputModel 是否包含具体的 MAGIC V 系列型号（如 magicvflip2, magicv6）但 SPU 只有 magic
+    if (spuModelLower === 'magic' && /magicv(?:flip\d*|v?\d+)/i.test(inputModelLower)) {
+      // input 有特定的 MAGIC V 系列型号（如 magicvflip212, magicv6），但 SPU 只有通用的 "magic"
+      // 检查 SPU 是否可能是配件（名称中包含"保护套"、"键盘"、"笔"等但没有具体型号）
+      if (/保护套|键盘|膜|壳|笔|手写笔|触控笔/i.test(spuPart)) {
+        return { matched: false, score: 0, reason: 'MAGIC系列具体型号vs配件通用名称' };
+      }
+    }
 
     // 如果匹配到的是通用类别（如"平板"），继续模糊匹配以找到具体型号
     // 只有当匹配到具体型号时才给分
@@ -508,6 +619,82 @@ function fuzzyMatch(input, spu) {
     // 注意：MagicBookPro16 包含 "book" 但有具体型号，不应视为通用匹配
     const genericModels = ['平板', 'book', 'magic'];
     const isGenericMatch = genericModels.some(g => inputModelLower === g.toLowerCase());
+
+    // 如果 inputModel 和 spuModel 不完全匹配，但 spuModel 是 inputModel 的基础版本
+    // （例如 input="magic v flip2", spu="magic v"），这是同一产品系列的不同型号
+    // 应该允许匹配，但降低分数
+    if (!isGenericMatch && inputModelLower !== spuModelLower) {
+      // 检查 spuModel 是否是 inputModel 的基础/前缀版本
+      // 例如：magic v flip2 vs magic v (spuModel是inputModel的前缀)
+      // 或者：magic v vs magic (spuModel是inputModel的前缀)
+      const isSpuBaseOfInput = inputModelLower.startsWith(spuModelLower) ||
+                                inputModelLower.includes(spuModelLower + ' ') ||
+                                inputModelLower.includes(spuModelLower + 'flip') ||
+                                inputModelLower.includes(spuModelLower + 'pro') ||
+                                inputModelLower.includes(spuModelLower + 'air');
+      if (isSpuBaseOfInput) {
+        // spuModel 是 inputModel 的基础版本，给予部分分数
+        // 但要检查具体型号是否兼容
+        // 例如：MAGICVFLIP2 vs MAGICV - 如果输入有 FLIP2 但 SPU 没有，不应该匹配
+        const hasMagicVFlip = /flip/i.test(inputModelLower);
+        const hasMagicVFlipSpu = /flip/i.test(spuModelLower);
+        const hasMagicVPro = /(?:^|[\s])pro/i.test(inputModelLower);
+        const hasMagicVProSpu = /(?:^|[\s])pro/i.test(spuModelLower);
+        // 如果一个有 FLIP/PRO 另一个没有，拒绝匹配（不同产品线）
+        if ((hasMagicVFlip !== hasMagicVFlipSpu) || (hasMagicVPro !== hasMagicVProSpu)) {
+          return { matched: false, score: 0, reason: 'MAGIC系列子型号不匹配' };
+        }
+
+        // 特别检查：如果是具体的 FLIP 型号（如 magicvflip2）但 SPU 是通用 FLIP（magicvflip，无数字），拒绝
+        // 例如：magicvflip2 不应匹配 magicvflip
+        if (/^magicvflip\d+$/i.test(inputModelLower) && /^magicvflip$/i.test(spuModelLower)) {
+          return { matched: false, score: 0, reason: 'FLIP具体型号不匹配通用FLIP(magicvflip)' };
+        }
+
+        // 特别检查：如果是 V 系列型号（如 magicv6）但 SPU 是通用 FLIP（magicvflip），拒绝
+        // V 系列和 FLIP 是不同产品线
+        if (/^magicv\d+$/i.test(inputModelLower) && /^magicvflip$/i.test(spuModelLower)) {
+          return { matched: false, score: 0, reason: 'V系列型号不匹配通用FLIP(magicvflip)' };
+        }
+
+        // 特别检查：如果是 V 系列型号（如 magicv6）但 SPU 是 FLIP 型号（如 magicvflip2），拒绝
+        // V 系列和 FLIP 是不同产品线
+        if (/^magicv\d+$/i.test(inputModelLower) && /^magicvflip\d+$/i.test(spuModelLower)) {
+          return { matched: false, score: 0, reason: 'V系列型号不匹配FLIP型号' };
+        }
+
+        // 否则给予部分分数
+        return { matched: true, score: 0.5, reason: '基础型号匹配(子型号差异)' };
+      }
+    }
+
+    // 特别检查：V 系列和 FLIP 系列是不同产品线，拒绝匹配
+    // 在 isSpuBaseOfInput 检查之外进行检查，确保总是执行
+    // 如果 input 是 V 系列（如 magicv6）但 SPU 是 FLIP 系列（如 magicvflip2），拒绝
+    if (inputModel && spuModel) {
+      const inputModelLowerCheck = inputModel.toLowerCase();
+      const spuModelLowerCheck = spuModel.toLowerCase();
+      // V 非 FLIP 型号 vs FLIP 型号
+      if (/^magicv\d+$/i.test(inputModelLowerCheck) && /^magicvflip\d+$/i.test(spuModelLowerCheck)) {
+        return { matched: false, score: 0, reason: 'V系列型号不匹配FLIP型号(外层检查)' };
+      }
+    }
+
+    // 特别检查：MAGIC 系列（如 MAGIC8PRO, MAGIC5PRO）vs 普通手机型号（如 60 Pro）
+    // MAGIC8PRO 是平板电脑系列，与 60 Pro（手机）是完全不同的产品线
+    // 如果输入有 MAGIC 系列型号，但 SPU 只是普通的 "XX Pro" 型号，拒绝匹配
+    if (inputModel && spuModel) {
+      const inputModelLowerCheck = inputModel.toLowerCase();
+      const spuModelLowerCheck = spuModel.toLowerCase();
+      // 输入有 MAGIC 系列（magic + 数字，如 magic8pro、magic5pro）
+      const hasMagicSeries = /^magic\d+.*pro$/i.test(inputModelLowerCheck) || /^magic\d+$/i.test(inputModelLowerCheck);
+      // SPU 是普通的 Pro 型号（只有 pro，没有 magic 前缀，如 "60 pro"、"mate 60 pro"）
+      const isGenericProPhone = /^[\d\s]+pro$/i.test(spuModelLowerCheck) || /^mate\s*\d+\s*pro$/i.test(spuModelLowerCheck);
+      if (hasMagicSeries && isGenericProPhone) {
+        return { matched: false, score: 0, reason: 'MAGIC系列平板不匹配普通Pro手机' };
+      }
+    }
+
 
     // 如果匹配到 V 系列但后面跟了3+数字（如V911），可能是匹配到了"11.5"等尺寸
     // V系列只有V9(1位数字)、V10+(2位数字)，不应该有3位数字
@@ -534,32 +721,55 @@ function fuzzyMatch(input, spu) {
       }
     }
 
-    // 尝试缩短 MAGIC 系列型号，去除可能的容量数字
+    // 尝试缩短 MAGIC V FLIP 型号，去除可能的容量数字
     // 例如：MAGICVFLIP212 -> MAGICVFLIP2 (去掉"12"可能是容量)
     //       MAGICVFLIP216 -> MAGICVFLIP2 (去掉"16"可能是容量)
-    if (/^magicvflip\d+$/i.test(inputModelLower) && inputModelLower !== spuModelLower) {
-      const shortenedModel = inputModelLower.replace(/(\d+)$/, (match, digits) => {
-        // 如果数字是 12, 16, 32, 64, 128, 256, 512 等常见容量，尝试去除
-        if (['12', '16', '32', '64', '128', '256', '512'].includes(digits)) {
-          return inputModelLower.slice(0, -digits.length);
-        }
-        // 如果原模型只有2位数字，去掉最后一位
-        if (/\d{2}$/.test(inputModelLower) && inputModelLower.replace(/^magicvflip/i, '').length <= 2) {
-          return inputModelLower.slice(0, -1);
-        }
-        return match;
-      });
-      if (shortenedModel !== inputModelLower) {
+    // 使用新的有效模型变量进行比较
+    let effectiveInputModelLower = inputModelLower;
+    if (/^magicvflip\d{3}$/i.test(inputModelLower) && inputModelLower !== spuModelLower) {
+      // 只有3位数字的FLIP型号才缩短（如212, 216, 232等）
+      // 去掉最后2位，保留前1位（实际型号）
+      const lastTwo = inputModelLower.slice(-2);
+      if (['12', '16', '32', '64'].includes(lastTwo)) {
+        const shortenedModel = inputModelLower.slice(0, -2);
         console.log(`[精确匹配] 尝试缩短型号 "${inputModelLower}" -> "${shortenedModel}"`);
-        inputModel = shortenedModel;
-        inputModelLower = inputModel.toLowerCase();
+        effectiveInputModelLower = shortenedModel;
+        inputModel = inputModel.toLowerCase().replace(/magicvflip\d{3}$/i, shortenedModel);
+      }
+    }
+
+    // 如果输入有具体的 FLIP 型号（如 magicvflip2），但 SPU 是非 FLIP 的 V 系列（如 magicv2、magicv3、magicv5），拒绝匹配
+    // 这是因为 FLIP 和 V 是不同的产品系列
+    if (/^magicvflip\d+$/i.test(effectiveInputModelLower)) {
+      // 检查 SPU 是否是非 FLIP 的 V 系列（magicv + 数字，但不含 flip）
+      if (/^magicv\d+$/i.test(spuModelLower) && !/flip/i.test(spuModelLower)) {
+        return { matched: false, score: 0, reason: 'FLIP型号不匹配非FLIP的V系列' };
+      }
+    }
+
+    // 如果输入是 V 系列具体型号（如 magicv6），但 SPU 是通用的 FLIP（无具体型号数字），拒绝匹配
+    // V 系列和 FLIP 是不同系列
+    if (/^magicv\d+$/i.test(effectiveInputModelLower) && !/flip/i.test(effectiveInputModelLower)) {
+      // 检查 SPU 是否是通用 FLIP（magic v flip、magicvflip 或 flip，不含数字）
+      if ((/^magic\s*v\s*flip$/i.test(spuModelLower) || /^magicvflip$/i.test(spuModelLower) || /^flip$/i.test(spuModelLower))) {
+        return { matched: false, score: 0, reason: 'V系列型号不匹配通用FLIP' };
+      }
+    }
+
+    // 如果输入有具体的 FLIP 型号（如 magicvflip2），但 SPU 是通用的 FLIP（无具体型号数字），拒绝匹配
+    // 例如：输入 magicvflip2 但 SPU 是 magicvflip 或 magic v flip（无数字），应该拒绝
+    if (/^magicvflip\d+$/i.test(effectiveInputModelLower)) {
+      // 检查 SPU 是否是通用 FLIP（magic v flip、magicvflip 或 flip，不含数字）
+      if ((/^magic\s*v\s*flip$/i.test(spuModelLower) || /^magicvflip$/i.test(spuModelLower) || /^flip$/i.test(spuModelLower))) {
+        return { matched: false, score: 0, reason: 'FLIP具体型号不匹配通用FLIP' };
       }
     }
 
     // 如果精确匹配失败（modelScore = 0），检查是否是明显的型号不匹配
     // 这些情况不应该进入模糊匹配，应该直接拒绝
     // 例如：输入 "500" 但 SPU 是 "Magic3"，这是产品类型不匹配
-    if (!inputModel || !spuModel || inputModelLower !== spuModelLower) {
+    // 注意：如果缩短后的有效模型与 SPU 模型匹配，则通过检查
+    if (!inputModel || !spuModel || (inputModelLower !== spuModelLower && effectiveInputModelLower !== spuModelLower)) {
       // 检查是否有明显的产品系列冲突
       // 500 系列 vs 其他系列（如 Magic3、V9 等）
       const has500Input = /(^|[\s\-])500[\s\-]?/i.test(inputModelLower) || /(^|[\s\-])500pro/i.test(inputModelLower);
