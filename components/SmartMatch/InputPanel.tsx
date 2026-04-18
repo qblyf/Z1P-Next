@@ -9,7 +9,7 @@ interface InputPanelProps {
   onMatch: () => void;
   onClear: () => void;
   loading: boolean;
-  spuCount: number;
+  skuCount?: number;
   disabled?: boolean;
 }
 
@@ -19,12 +19,12 @@ export function InputPanel({
   onMatch,
   onClear,
   loading,
-  spuCount,
+  skuCount,
   disabled = false,
 }: InputPanelProps) {
   return (
-    <Card 
-      className="flex-1 flex flex-col" 
+    <Card
+      className="flex-1 flex flex-col"
       styles={{ body: { padding: '16px', display: 'flex', flexDirection: 'column', height: '100%' } }}
     >
       <div className="flex flex-col h-full">
@@ -33,9 +33,11 @@ export function InputPanel({
             <label className="block text-sm font-medium text-slate-700">
               输入商品名称（每行一个）
             </label>
-            <div className="text-sm text-slate-500">
-              已加载 {spuCount} 个SPU
-            </div>
+            {skuCount !== undefined && (
+              <div className="text-sm text-slate-500">
+                已加载 {skuCount} 个SKU
+              </div>
+            )}
           </div>
           <Input.TextArea
             value={inputText}
@@ -49,7 +51,7 @@ export function InputPanel({
 
         <div className="mt-auto space-y-3">
           <div className="text-sm text-slate-500">
-            支持批量输入，系统将先匹配SPU，再匹配对应的SKU参数（容量、颜色）
+            支持批量输入，系统将直接匹配SKU
           </div>
           <div className="flex gap-2">
             <Button

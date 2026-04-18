@@ -3,12 +3,10 @@
 import { useState, useEffect } from 'react';
 import { message, Spin, Upload, Button, Select, Modal } from 'antd';
 import { UploadOutlined, FileExcelOutlined, ClearOutlined } from '@ant-design/icons';
-import { getSPUListNew } from '@zsqk/z1-sdk/es/z1p/product';
-import { SPUState } from '@zsqk/z1-sdk/es/z1p/alltypes';
 import { getBrandBaseList } from '@zsqk/z1-sdk/es/z1p/brand';
 import { MatchingOrchestrator } from '../utils/services/MatchingOrchestrator';
 import { parseExcelWithColumnSelection, createInputToRowMapGeneric, previewExcel, type ExcelRowData } from '../utils/excelParser';
-import type { SPUData, BrandData } from '../utils/types';
+import type { BrandData } from '../utils/types';
 import { InputPanel } from './SmartMatch/InputPanel';
 import { ResultPanel } from './SmartMatch/ResultPanel';
 
@@ -30,8 +28,7 @@ interface UIMatchResult {
 export default function SmartMatch() {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
-  const [loadingSPU, setLoadingSPU] = useState(true);
-  const [spuList, setSPUList] = useState<SPUData[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
   const [brandList, setBrandList] = useState<BrandData[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
@@ -70,25 +67,22 @@ export default function SmartMatch() {
           return;
         }
 
-        // 等待SPU列表加载完成
-        if (spuList.length === 0) {
-          console.log('等待SPU列表加载...');
-          return;
-        }
-
-        await orchestrator.initialize(brandList, spuList);
+        // 不再需要等待SPU列表，MatchingOrchestrator内部会加载SKU数据
+        await orchestrator.initialize(brandList, []);
         setMatcherInitialized(true);
+        setLoadingData(false);
         console.log('✓ MatchingOrchestrator initialized');
       } catch (error) {
         console.error('Failed to initialize orchestrator:', error);
         message.error('匹配器初始化失败');
+        setLoadingData(false);
       }
     };
 
-    if (brandList.length > 0 && spuList.length > 0) {
+    if (brandList.length > 0) {
       initOrchestrator();
     }
-  }, [orchestrator, brandList, spuList]);
+  }, [orchestrator, brandList]);
 
   // 加载品牌数据
   useEffect(() => {
@@ -104,92 +98,8 @@ export default function SmartMatch() {
     loadBrandData();
   }, []);
 
-  // 加载所有SPU数据
-  const loadSPUData = async () => {
-    try {
-      setLoadingSPU(true);
-
-      console.log('=== 开始加载SPU和SKU规格数据 ===');
-      const startTime = Date.now();
-
-      // 分批加载所有SPU数据（包含skuIDs）
-      const allSpuList: SPUData[] = [];
-      const batchSize = 10000;
-      let offset = 0;
-      let hasMore = true;
-      let totalLoaded = 0;
-      let filteredCount = 0;
-
-      while (hasMore) {
-        const spuListBatch = await getSPUListNew(
-          {
-            states: [SPUState.在用],
-            limit: batchSize,
-            offset,
-            orderBy: [{ key: 'p."id"', sort: 'ASC' }],
-          },
-          ['id', 'name', 'brand', 'skuIDs']
-        );
-
-        totalLoaded += spuListBatch.length;
-
-        // 过滤掉没有品牌的SPU
-        const validSpuList = spuListBatch.filter(spu => {
-          if (!spu.brand || spu.brand.trim() === '') {
-            filteredCount++;
-            return false;
-          }
-          return true;
-        });
-
-        allSpuList.push(...validSpuList);
-        console.log(`已加载 ${spuListBatch.length} 个SPU，过滤 ${spuListBatch.length - validSpuList.length} 个无品牌SPU，有效: ${validSpuList.length}，总计: ${allSpuList.length}`);
-
-        if (spuListBatch.length < batchSize) {
-          hasMore = false;
-        } else {
-          offset += batchSize;
-        }
-      }
-
-      setSPUList(allSpuList);
-
-      const totalTime = ((Date.now() - startTime) / 1000).toFixed(1);
-
-      console.log('=== SPU数据加载完成 ===');
-      console.log(`总加载: ${totalLoaded} 个SPU`);
-      console.log(`过滤无品牌: ${filteredCount} 个SPU`);
-      console.log(`有效SPU: ${allSpuList.length} 个`);
-      console.log(`总耗时: ${totalTime}秒`);
-
-      message.success(`已加载 ${allSpuList.length} 个有效SPU（过滤${filteredCount}个无品牌，耗时${totalTime}秒）`);
-    } catch (error) {
-      message.error('加载SPU数据失败');
-      console.error(error);
-    } finally {
-      setLoadingSPU(false);
-    }
-  };
-
-  // 只在首次真正需要时加载数据
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.pathname === '/smart-match') {
-      const timer = setTimeout(() => {
-        if (spuList.length === 0) {
-          loadSPUData();
-        }
-      }, 100);
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
   // 处理 Excel 数据的匹配
   const handleExcelMatch = async (rows: ExcelRowData[]) => {
-    if (spuList.length === 0) {
-      message.warning('SPU数据未加载完成，请稍候');
-      return;
-    }
-
     if (!matcherInitialized) {
       message.warning('匹配器初始化中，请稍候');
       return;
@@ -325,11 +235,6 @@ export default function SmartMatch() {
       return;
     }
 
-    if (spuList.length === 0) {
-      message.warning('SPU数据未加载完成，请稍候');
-      return;
-    }
-
     if (!matcherInitialized) {
       message.warning('匹配器初始化中，请稍候');
       return;
@@ -429,10 +334,10 @@ export default function SmartMatch() {
     setPageSize(size);
   };
 
-  if (loadingSPU) {
+  if (loadingData) {
     return (
       <div className="flex items-center justify-center h-64">
-        <Spin size="large" tip="正在加载SPU数据..." />
+        <Spin size="large" tip="正在加载数据..." />
       </div>
     );
   }
@@ -493,7 +398,6 @@ export default function SmartMatch() {
             onMatch={handleMatch}
             onClear={handleClear}
             loading={loading}
-            spuCount={spuList.length}
             disabled={!matcherInitialized || isExcelMode}
           />
         </div>
