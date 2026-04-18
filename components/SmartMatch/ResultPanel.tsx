@@ -29,6 +29,7 @@ interface MatchProgress {
   current: number;
   total: number;
   currentItem: string;
+  logs: string[];
   results: UIMatchResult[] | null;
 }
 
@@ -62,7 +63,7 @@ export function ResultPanel({
         className="flex-1 flex flex-col"
         styles={{ body: { padding: '24px', display: 'flex', flexDirection: 'column', height: '100%' } }}
       >
-        <MatchingProgressUI total={matchProgress.total} />
+        <MatchingProgressUI total={matchProgress.total} logs={matchProgress.logs} />
       </Card>
     );
   }
@@ -137,37 +138,30 @@ export function ResultPanel({
 }
 
 // 匹配进度展示组件
-function MatchingProgressUI({ total }: { total: number }) {
+function MatchingProgressUI({ total, logs }: { total: number; logs: string[] }) {
   return (
-    <div className="flex flex-col items-center justify-center h-full min-h-[400px]">
-      {/* 中心动画区域 */}
-      <div className="relative mb-8">
-        <div className="w-32 h-32 rounded-full border-4 border-slate-200 flex items-center justify-center">
-          <SyncOutlined className="animate-spin text-4xl text-blue-500" />
+    <div className="flex flex-col h-full">
+      {/* 顶部状态区域 */}
+      <div className="flex flex-col items-center py-6">
+        {/* 中心动画区域 */}
+        <div className="relative mb-4">
+          <div className="w-20 h-20 rounded-full border-4 border-slate-200 flex items-center justify-center">
+            <SyncOutlined className="animate-spin text-3xl text-blue-500" />
+          </div>
         </div>
+
+        {/* 状态文字 */}
+        <h3 className="text-lg font-medium text-slate-700 mb-2">正在匹配中...</h3>
+        <p className="text-slate-500 mb-4">已处理 {logs.length} / {total} 条</p>
       </div>
 
-      {/* 状态文字 */}
-      <h3 className="text-xl font-medium text-slate-700 mb-2">正在匹配中...</h3>
-      <p className="text-slate-500 mb-6">共 {total} 条数据</p>
-
-      {/* 进度条 */}
-      <div className="w-full max-w-md mb-6">
-        <Progress
-          percent={100}
-          status="active"
-          strokeColor={{
-            '0%': '#3b82f6',
-            '100%': '#10b981',
-          }}
-          trailColor="#e2e8f0"
-        />
-      </div>
-
-      {/* 提示 */}
-      <div className="mt-6 text-xs text-slate-400 text-center max-w-sm">
-        匹配过程中请勿关闭页面<br/>
-        数据量越大，匹配时间越长
+      {/* 日志显示区域 */}
+      <div className="flex-1 mx-4 mb-4 bg-slate-900 rounded-lg p-3 overflow-auto" style={{ maxHeight: 'calc(100vh - 400px)' }}>
+        <div className="font-mono text-xs text-green-400 space-y-1">
+          {logs.slice(-20).map((log, idx) => (
+            <div key={idx} className="whitespace-pre-wrap break-all">{log}</div>
+          ))}
+        </div>
       </div>
     </div>
   );

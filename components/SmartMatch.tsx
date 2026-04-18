@@ -52,6 +52,7 @@ export default function SmartMatch() {
     current: number;
     total: number;
     currentItem: string;
+    logs: string[];
     results: UIMatchResult[] | null;
   } | null>(null);
 
@@ -124,16 +125,27 @@ export default function SmartMatch() {
 
     console.log(`[Excel匹配] 开始匹配 ${inputs.length} 条数据`);
 
+    const logs: string[] = [];
+
     setMatchProgress({
       current: 0,
       total: inputs.length,
       currentItem: '正在匹配...',
+      logs: [],
       results: null
     });
 
     try {
-      // 使用 MatchingOrchestrator 进行批量匹配（不使用进度回调）
-      const batchResult = await orchestrator.batchMatch(inputs);
+      // 使用 MatchingOrchestrator 进行批量匹配
+      const batchResult = await orchestrator.batchMatch(inputs, (index, total, input, result) => {
+        // 更新进度
+        setMatchProgress(prev => prev ? {
+          ...prev,
+          current: index,
+          currentItem: input.substring(0, 30) + (input.length > 30 ? '...' : ''),
+          logs: [...prev.logs.slice(-19), `[${index}/${total}] ${result ? '✓ ' + result.matchedInfo.sku : '匹配中...'}`]
+        } : null);
+      });
 
       // 转换结果格式，关联 GTIN
       const uiResults: UIMatchResult[] = batchResult.results.map(result => {
@@ -267,16 +279,27 @@ export default function SmartMatch() {
 
     const lines = inputText.split('\n').filter(line => line.trim());
 
+    const logs: string[] = [];
+
     setMatchProgress({
       current: 0,
       total: lines.length,
       currentItem: '',
+      logs: [],
       results: null
     });
 
     try {
-      // 使用 MatchingOrchestrator 进行批量匹配（不使用进度回调，直接获取结果）
-      const batchResult = await orchestrator.batchMatch(lines);
+      // 使用 MatchingOrchestrator 进行批量匹配
+      const batchResult = await orchestrator.batchMatch(lines, (index, total, input, result) => {
+        // 更新进度
+        setMatchProgress(prev => prev ? {
+          ...prev,
+          current: index,
+          currentItem: input.substring(0, 30) + (input.length > 30 ? '...' : ''),
+          logs: [...prev.logs.slice(-19), `[${index}/${total}] ${result ? '✓ ' + result.matchedInfo.sku : '匹配中...'}`]
+        } : null);
+      });
 
       // 匹配完成，一次性设置结果
       const uiResults: UIMatchResult[] = batchResult.results.map(result => ({
