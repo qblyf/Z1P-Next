@@ -227,7 +227,6 @@ export default function SmartMatch() {
     }
 
     try {
-      setLoading(true);
       setShowColumnSelector(false);
       console.log('[Excel导入] 开始解析文件:', pendingFile.name);
 
@@ -239,16 +238,16 @@ export default function SmartMatch() {
       setExcelData(rows);
       setIsExcelMode(true);
 
-      message.success(`成功解析 ${rows.length} 条数据`);
+      // 将解析的数据填入输入框（按行分隔显示）
+      const inputText = rows.map(r => r.productName).join('\n');
+      setInputText(inputText);
 
-      // 自动执行匹配
-      await handleExcelMatch(rows);
+      message.success(`成功解析 ${rows.length} 条数据，请点击"开始匹配"`);
 
     } catch (error) {
       console.error('[Excel导入] 解析失败:', error);
       message.error(`导入失败: ${error instanceof Error ? error.message : '未知错误'}`);
     } finally {
-      setLoading(false);
       setPendingFile(null);
     }
   };
@@ -263,8 +262,14 @@ export default function SmartMatch() {
     setPendingFile(null);
   };
 
-  // 处理手动输入匹配
+  // 处理匹配（手动输入或Excel模式）
   const handleMatch = async () => {
+    // Excel模式优先
+    if (isExcelMode && excelData.length > 0) {
+      await handleExcelMatch(excelData);
+      return;
+    }
+
     if (!inputText.trim()) {
       message.warning('请输入商品名称');
       return;
@@ -386,6 +391,11 @@ export default function SmartMatch() {
     setInputText('');
     setResults([]);
     setCurrentPage(1);
+    // 如果是Excel模式，也重置Excel相关状态
+    if (isExcelMode) {
+      setExcelData([]);
+      setIsExcelMode(false);
+    }
   };
 
   const handlePageChange = (page: number, size: number) => {
@@ -457,7 +467,8 @@ export default function SmartMatch() {
             onMatch={handleMatch}
             onClear={handleClear}
             loading={loading}
-            disabled={!matcherInitialized || isExcelMode}
+            textareaDisabled={!matcherInitialized || isExcelMode}
+            buttonDisabled={!matcherInitialized || (isExcelMode && !inputText.trim())}
           />
         </div>
       </div>

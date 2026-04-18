@@ -10,7 +10,8 @@ interface InputPanelProps {
   onClear: () => void;
   loading: boolean;
   skuCount?: number;
-  disabled?: boolean;
+  textareaDisabled?: boolean;
+  buttonDisabled?: boolean;
 }
 
 export function InputPanel({
@@ -20,7 +21,8 @@ export function InputPanel({
   onClear,
   loading,
   skuCount,
-  disabled = false,
+  textareaDisabled = false,
+  buttonDisabled = false,
 }: InputPanelProps) {
   return (
     <Card
@@ -45,7 +47,7 @@ export function InputPanel({
             placeholder="请输入商品名称，每行一个&#10;例如：&#10;华为 Mate 60 Pro 12+256 雅川青&#10;苹果 iPhone 15 Pro Max 256GB 钛金色&#10;小米14 Ultra 16GB+512GB 黑色"
             className="flex-1"
             style={{ height: '100%', minHeight: '400px', resize: 'none' }}
-            disabled={loading || disabled}
+            disabled={loading || textareaDisabled}
           />
         </div>
 
@@ -65,7 +67,7 @@ export function InputPanel({
               type="primary"
               icon={loading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
               onClick={onMatch}
-              disabled={loading || !inputText.trim() || disabled}
+              disabled={loading || !inputText.trim() || buttonDisabled}
               block
             >
               {loading ? '匹配中...' : '开始匹配'}
