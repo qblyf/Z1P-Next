@@ -57,64 +57,66 @@ export default function GTINQueryPage() {
       return;
     }
 
-    if (gtinList.length > 100) {
-      message.warning('每次最多查询100个69码');
-      return;
-    }
-
     setLoading(true);
     setHasSearched(true);
+    setResults([]);
+
+    const BATCH_SIZE = 100;
+    const queryResults: GTINQueryResult[] = [];
 
     try {
-      const queryResults: GTINQueryResult[] = [];
+      // 分批处理，每批100条
+      for (let i = 0; i < gtinList.length; i += BATCH_SIZE) {
+        const batch = gtinList.slice(i, i + BATCH_SIZE);
 
-      // 逐个查询每个GTIN
-      for (const gtin of gtinList) {
-        const result: GTINQueryResult = {
-          key: gtin,
-          gtin,
-          found: false,
-        };
+        // 逐个查询每批中的每个GTIN
+        for (const gtin of batch) {
+          const result: GTINQueryResult = {
+            key: gtin,
+            gtin,
+            found: false,
+          };
 
-        try {
-          // 使用 getSKUListJoinSPU 查询，gtinKeyword 支持模糊匹配
-          const skus = await getSKUListJoinSPU(
-            {
-              limit: 10,
-              offset: 0,
-              gtinKeyword: gtin,
-            },
-            {
-              sku: ['id', 'name', 'gtins', 'state'],
-              spu: ['spuName', 'brand'],
+          try {
+            // 使用 getSKUListJoinSPU 查询，gtinKeyword 支持模糊匹配
+            const skus = await getSKUListJoinSPU(
+              {
+                limit: 10,
+                offset: 0,
+                gtinKeyword: gtin,
+              },
+              {
+                sku: ['id', 'name', 'gtins', 'state'],
+                spu: ['spuName', 'brand'],
+              }
+            );
+
+            // 精确匹配GTIN（因为 gtinKeyword 是模糊匹配）
+            const exactMatch = skus.find(sku =>
+              sku.gtins && sku.gtins.some(g => g === gtin || g.includes(gtin))
+            );
+
+            if (exactMatch) {
+              result.found = true;
+              result.skuId = exactMatch.id;
+              result.skuName = exactMatch.name;
+              result.state = exactMatch.state;
+              result.gtins = exactMatch.gtins;
+              if ('spuID' in exactMatch) {
+                result.spuId = (exactMatch as any).spuID;
+              }
+              if ('spu' in exactMatch && exactMatch.spu) {
+                const spu = exactMatch.spu as { spuName?: string; brand?: string };
+                result.spuName = spu.spuName;
+                result.brand = spu.brand;
+              }
             }
-          );
-
-          // 精确匹配GTIN（因为 gtinKeyword 是模糊匹配）
-          const exactMatch = skus.find(sku =>
-            sku.gtins && sku.gtins.some(g => g === gtin || g.includes(gtin))
-          );
-
-          if (exactMatch) {
-            result.found = true;
-            result.skuId = exactMatch.id;
-            result.skuName = exactMatch.name;
-            result.state = exactMatch.state;
-            result.gtins = exactMatch.gtins;
-            if ('spuID' in exactMatch) {
-              result.spuId = (exactMatch as any).spuID;
-            }
-            if ('spu' in exactMatch && exactMatch.spu) {
-              const spu = exactMatch.spu as { spuName?: string; brand?: string };
-              result.spuName = spu.spuName;
-              result.brand = spu.brand;
-            }
+          } catch (err) {
+            console.error(`查询GTIN ${gtin}失败:`, err);
           }
-        } catch (err) {
-          console.error(`查询GTIN ${gtin}失败:`, err);
-        }
 
-        queryResults.push(result);
+          queryResults.push(result);
+        }
       }
 
       setResults(queryResults);
