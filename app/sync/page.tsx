@@ -43,45 +43,26 @@ function ClientPage() {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [disabled, setDisabled] = useState(false);
 
-  // 账套列表
+  // 账套列表 - 硬编码的账套ID列表（与CLI一致）
+  const clientKeys = [
+    'newgy', 'gx', 'zsqk', 'gy', 'gx0775',
+    'haombo', 'zsqkp', 'jcxiaomi', 'llxiaomi',
+    'baicheng', 'jiyuandixintong', 'changfasm',
+    'pingnuo', 'kaisheng', 'linji', 'sulian',
+    'znyxt', 'hwyxt', 'xmyxt', 'pgyxt', 'yysyxt'
+  ];
+
   const [tenantList, setTenantList] = useState<Array<{
     id: string;
     tenantID: string;
     clientName: string;
-  }>>([]);
+  }>>(
+    clientKeys.map(id => ({ id, tenantID: id, clientName: id }))
+  );
 
   // 选中的账套列表
-  const [selectedTenants, setSelectedTenants] = useState<string[]>([]);
+  const [selectedTenants, setSelectedTenants] = useState<string[]>(clientKeys);
   const [selectAll, setSelectAll] = useState(true);
-
-  // 获取账套列表
-  useEffect(() => {
-    if (!token) return;
-
-    // 从 sys-setting API 获取账套列表
-    fetch(`/api/tenants?token=${encodeURIComponent(token)}`)
-      .then(res => res.json())
-      .then(result => {
-        if (!result.success) {
-          throw new Error(result.message || '获取账套列表失败');
-        }
-
-        // 使用 API 返回的 tenantID
-        const tenants = result.data.map((v: any) => ({
-          id: v.tenantID,
-          tenantID: v.tenantID,
-          clientName: v.name
-        }));
-
-        setTenantList(tenants);
-        setSelectedTenants(tenants.map((t: any) => t.tenantID));
-        setSelectAll(true);
-      })
-      .catch(err => {
-        console.error('获取账套列表失败:', err);
-        setMsg(`获取账套列表失败: ${err.message}`);
-      });
-  }, [token]);
 
   // 处理全选/取消全选
   const handleSelectAll = (checked: boolean) => {
