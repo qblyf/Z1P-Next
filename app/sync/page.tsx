@@ -87,45 +87,26 @@ function ClientPage() {
     }
   };
 
-  // API 调用辅助函数（使用认证令牌）
-  const pullAllData = async (authToken: string) => {
-    const res = await fetch(`/api/sync-data/all?token=${encodeURIComponent(authToken)}`);
-    const json = await res.json();
-    if (!json.success) throw new Error(json.message || '拉取数据失败');
-    return json.data;
-  };
+  // SDK 同步函数
+  const { pullAllData, addSyncData, syncProductSingle } = require('@zsqk/z1-sdk/es/z1p/sync-data');
+  const { addSyncLogWithData } = require('@zsqk/z1-sdk/es/z1p/sync-log');
 
-  const addSyncData = async (authToken: string, data: any) => {
-    const res = await fetch(`/api/sync-data/add`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-      body: JSON.stringify({ data })
-    });
-    const json = await res.json();
-    if (!json.success) throw new Error(json.message || '整理数据失败');
-    return json.data;
-  };
-
-  const addSyncLogWithData = async (authToken: string, syncDataID: number, data: any) => {
-    const res = await fetch(`/api/sync-log/add-with-data`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-      body: JSON.stringify({ syncDataID, data })
-    });
-    const json = await res.json();
-    if (!json.success) throw new Error(json.message || '生成同步日志失败');
-    return json.data;
-  };
-
-  const syncProductSingle = async (authToken: string, params: { syncDataID: number; data: any; logID?: number }) => {
-    const res = await fetch(`/api/product/sync/single`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
-      body: JSON.stringify(params)
-    });
-    const json = await res.json();
-    if (!json.success) throw new Error(json.message || '同步失败');
-    return json.data;
+  // 遍历账套进行同步
+  const syncAllTenants = async (syncDataID: number, data: any, selectedTenantIDs: string[]) => {
+    const results: any[] = [];
+    for (const tenantID of selectedTenantIDs) {
+      try {
+        const result = await syncProductSingle({
+          tenantID,
+          syncDataID,
+          data,
+        });
+        results.push({ tenantID, success: true, result });
+      } catch (error) {
+        results.push({ tenantID, success: false, error });
+      }
+    }
+    return results;
   };
 
   const fn = useMemo(() => {
@@ -154,38 +135,38 @@ function ClientPage() {
         setCurrentStep('正在从公库拉取数据...');
         setCurrentStepIndex(0);
         setProgress(10);
-        const data = await pullAllData(token);
+        const data = await pullAllData();
 
         // 步骤2: 生成同步数据相关信息
         setCurrentStep('正在整理同步数据...');
         setCurrentStepIndex(1);
         setProgress(30);
-        const syncDataResult = await addSyncData(token, data);
+        const syncDataResult = await addSyncData({ data });
         const syncDataID = syncDataResult.syncDataID;
 
         // 步骤3: 生成同步日志
         setCurrentStep('正在生成同步日志...');
         setCurrentStepIndex(2);
         setProgress(40);
-        const logID = await addSyncLogWithData(token, syncDataID, data);
+        const logResult = await addSyncLogWithData({ syncDataID, data });
+        const logID = logResult.logID;
 
-        // 步骤4: 执行同步（不需要tenantID）
-        setCurrentStep('正在同步数据...');
+        // 步骤4: 遍历账套执行同步
+        setCurrentStep(`正在同步到 ${selectedTenants.length} 个账套...`);
         setCurrentStepIndex(3);
         setProgress(60);
 
-        const result = await syncProductSingle(token, {
-          syncDataID,
-          data,
-          logID
-        });
+        const results = await syncAllTenants(syncDataID, data, selectedTenants);
 
-        console.log('✅ 同步成功:', result);
+        const successCount = results.filter(r => r.success).length;
+        const failCount = results.filter(r => !r.success).length;
+
+        console.log('✅ 同步完成:', results);
 
         setProgress(100);
         setCurrentStepIndex(4);
         setCurrentStep('');
-        setMsg('同步完成');
+        setMsg(`同步完成：成功 ${successCount} 个，失败 ${failCount} 个`);
 
         // 清除超时定时器
         clearTimeout(timeoutId);
