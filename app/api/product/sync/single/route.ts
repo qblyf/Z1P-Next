@@ -9,27 +9,20 @@ const API_ENDPOINT = process.env.NEXT_PUBLIC_Z1P_ENDPOINT || 'https://p-api.z1.p
 /**
  * POST /api/product/sync/single
  * 同步商品数据
- * 注意：不需要 tenantID 参数，API会根据认证信息自动同步到对应账套
+ * 注意：同步API不需要Bearer token认证，后端通过其他方式（如cookie、内部网络等）进行认证
  */
 export async function POST(request: Request) {
   try {
-    const token = request.headers.get('Authorization')?.replace('Bearer ', '');
     const body = await request.json();
-
-    if (!token) {
-      return NextResponse.json(
-        { success: false, error: '缺少认证令牌' },
-        { status: 401 }
-      );
-    }
 
     // 移除 tenantID（如果存在），API 不需要此参数
     const { tenantID, ...syncParams } = body;
 
+    // 直接转发请求到后端，不添加 Authorization header
+    // 后端通过其他机制进行认证
     const res = await fetch(`${API_ENDPOINT}/product/sync/single`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json'
       },
       body: JSON.stringify(syncParams)
