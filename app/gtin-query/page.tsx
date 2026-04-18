@@ -52,8 +52,16 @@ export default function GTINQueryPage() {
       .map(g => g.trim())
       .filter(g => g.length > 0);
 
+    const MAX_LIMIT = 2000;
+    const BATCH_SIZE = 100;
+
     if (gtinList.length === 0) {
       message.warning('请输入至少一个69码');
+      return;
+    }
+
+    if (gtinList.length > MAX_LIMIT) {
+      message.warning(`最多只能一次查询 ${MAX_LIMIT} 个69码`);
       return;
     }
 
@@ -61,7 +69,6 @@ export default function GTINQueryPage() {
     setHasSearched(true);
     setResults([]);
 
-    const BATCH_SIZE = 100;
     const queryResults: GTINQueryResult[] = [];
 
     try {
@@ -236,7 +243,7 @@ export default function GTINQueryPage() {
               margin: 0,
               fontSize: '14px'
             }}>
-              输入69码（GTIN）列表，批量查询对应的商品信息
+              输入69码（GTIN）列表，批量查询对应的商品信息，每次最多2000个
             </p>
           </div>
 
@@ -246,9 +253,9 @@ export default function GTINQueryPage() {
           <Card style={{ marginBottom: 16 }}>
             <Row gutter={16}>
               <Col span={24}>
-                <Text strong>输入69码（每行一个，或用逗号、分号分隔）：</Text>
+                <Text strong>输入69码（每行一个，或用逗号、分号分隔，最多2000个）：</Text>
                 <TextArea
-                  placeholder={`示例：\n6936520859450\n6974752440923\n6977887510721`}
+                  placeholder={`示例：\n6936520859450\n6974752440923\n6977887510721\n（每次最多输入2000个）`}
                   value={inputGtins}
                   onChange={e => setInputGtins(e.target.value)}
                   rows={6}
