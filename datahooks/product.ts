@@ -80,20 +80,23 @@ function useSPUList() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(100);
   const [hasMore, setHasMore] = useState(true);
+  const [nameKeyword, setNameKeyword] = useState('');
 
   const { spuCateID } = useSPUCateIDContext();
   const { setSpuID } = useSpuIDContext();
 
-  const loadPage = useCallback((page: number) => {
+  const loadPage = useCallback((page: number, keyword?: string) => {
     // 使用startTransition标记为低优先级更新，不阻塞用户交互
     startTransition(() => {
       lessAwait(async () => {
         const offset = (page - 1) * pageSize;
-        
+        const kw = keyword !== undefined ? keyword : nameKeyword;
+
         // 使用 getSPUListNew 获取 SPU 列表，每次最多 100 条
         const d = await getSPUListNew(
           {
             ...(spuCateID ? { cateIDs: [spuCateID] } : {}),
+            ...(kw ? { nameKeyword: kw } : {}),
             states: [SPUState.在用],
             limit: pageSize,
             offset,
@@ -104,24 +107,36 @@ function useSPUList() {
           },
           ['id', 'name', 'brand', 'series', 'generation', 'order']
         );
-        
+
         setSpuList(d as any);
         setCurrentPage(page);
         setHasMore(d.length === pageSize);
         setSpuID(undefined);
       })();
     });
-  }, [spuCateID, setSpuID, pageSize]);
+  }, [spuCateID, setSpuID, pageSize, nameKeyword]);
 
   const update = useCallback(() => {
     loadPage(1);
   }, [loadPage]);
 
+  // 当分类变化时，重新加载
   useEffect(() => {
     update();
   }, [update]);
 
-  return { spuList, setSpuList, isPending, currentPage, pageSize, hasMore, loadPage };
+  return {
+    spuList,
+    setSpuList,
+    isPending,
+    currentPage,
+    pageSize,
+    hasMore,
+    loadPage,
+    nameKeyword,
+    setNameKeyword,
+    refresh: update,
+  };
 }
 
 export const [SPUListProvider, useSpuListContext] = constate(useSPUList);

@@ -46,21 +46,16 @@ const BRAND_PATTERNS = [
 // 第三方品牌前缀列表（这些前缀后面跟"荣耀"或"荣耀亲选"的不是荣耀官方产品）
 const THIRD_PARTY_PREFIXES = [
   '极选 JOESKY', '乔威', '乐坞', '联创', 'WHIZKID', 'REEPRO', 'IOTAPK', '万魔', '极选',
-  '荣耀亲选',  // 荣耀亲选是第三方品牌，不是荣耀官方
+  '荣耀亲选',  // 荣耀亲选是第三方平台，不是荣耀官方
   '思派力',     // 荣耀思派力是第三方品牌，不是荣耀官方
   '亲选',       // "亲选"是"荣耀亲选"的简称，如"亲选荣耀400..."
 ];
 
-// 第三方品牌前缀（按优先级排序，用于 removeThirdPartyPrefix）
-const THIRD_PARTY_PREFIXES_SORTED = [
+// 第三方品牌前缀（只用于检测，不用于移除）
+// 这些前缀是检测用的，不会被移除
+const THIRD_PARTY_PREFIXES_FOR_DETECTION = [
   '荣耀亲选',
-  '极选 JOESKY',
-  'WHIZKID',
-  'REEPRO',
-  'JOWAY',
-  'DOINGTOP',
-  'POWER-',
-  'O项目',
+  '亲选',
   '乔威',
   '乐坞',
   '联创',
@@ -68,17 +63,23 @@ const THIRD_PARTY_PREFIXES_SORTED = [
   '万魔',
   '极选',
   '思派力',
-  '亲选',       // "亲选"是"荣耀亲选"的简称，必须放在后面处理
+  'O项目',
+];
+
+// 第三方品牌前缀（用于 removeThirdPartyPrefix，只移除明显的平台前缀）
+const PLATFORM_PREFIXES_TO_REMOVE = [
+  '荣耀亲选',  // 移除后保留"荣耀"作为产品名的一部分
+  '亲选',       // "亲选"是"荣耀亲选"的简称
 ];
 
 function extractBrand(skuName) {
-  // 先检查是否是第三方品牌（包含荣耀但不是荣耀官方）
+  // 先检查是否是第三方平台前缀（包含荣耀但不是荣耀官方）
   // 使用精确匹配：检查字符串是否以第三方前缀开头
-  for (const prefix of THIRD_PARTY_PREFIXES_SORTED) {
+  for (const prefix of THIRD_PARTY_PREFIXES_FOR_DETECTION) {
     // 检查是否以该前缀开头（如 "荣耀亲选荣耀MAGIC8PRO" 以 "荣耀亲选" 开头）
     // 也要检查"亲选荣耀"这种情况（"亲选"是"荣耀亲选"的简称）
     if (skuName.startsWith(prefix) || skuName.startsWith('亲选' + prefix.slice(2))) {
-      return null; // 第三方品牌，不提取荣耀
+      return null; // 第三方平台，不提取荣耀
     }
   }
   for (const { pattern, brand } of BRAND_PATTERNS) {
@@ -90,9 +91,11 @@ function extractBrand(skuName) {
 }
 
 /**
- * 去除第三方品牌前缀（多次迭代直到没有变化）
- * 例如："荣耀亲选荣耀MAGIC8PRO磁吸保护壳专供" -> "MAGIC8PRO磁吸保护壳专供"
- * 例如："亲选荣耀400素皮保护壳素皮专供" -> "荣耀400素皮保护壳专供"
+ * 去除第三方平台前缀（多次迭代直到没有变化）
+ * 例如："荣耀亲选荣耀MAGIC8PRO磁吸保护壳专供" -> "荣耀亲选 MAGIC8PRO磁吸保护壳专供"
+ *   - 保留"荣耀亲选"作为品牌，只移除后续的"荣耀"
+ * 例如："亲选荣耀400素皮保护壳素皮专供" -> "荣耀亲选 荣耀400素皮保护壳专供"
+ * 注意：只移除平台前缀（如"荣耀亲选"），不移除品牌前缀（如"REEPRO"、"JOWAY"等）
  */
 function removeThirdPartyPrefix(skuName) {
   let result = skuName;
@@ -103,13 +106,30 @@ function removeThirdPartyPrefix(skuName) {
 
   while (previous !== result && iterations < maxIterations) {
     previous = result;
-    for (const prefix of THIRD_PARTY_PREFIXES_SORTED) {
-      // 使用更精确的匹配：检查开头或者前面是空格/特殊字符的位置
+    for (const prefix of PLATFORM_PREFIXES_TO_REMOVE) {
       const escapedPrefix = prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      // 匹配前缀在开头、前面是空格、或是"荣耀"（用于"亲选荣耀"->"荣耀亲选"的情况）
-      const pattern = new RegExp(`^${escapedPrefix}|\\s${escapedPrefix}|荣耀${escapedPrefix}`, 'g');
+
+      // 特殊处理"荣耀亲选"：保留平台名"荣耀亲选"，只移除后续的"荣耀"
+      if (prefix === '荣耀亲选') {
+        // 匹配 "荣耀亲选荣耀" -> "荣耀亲选 "
+        const pattern1 = new RegExp(`荣耀亲选荣耀`, 'g');
+        result = result.replace(pattern1, '荣耀亲选 ').trim();
+        // 如果还有单独的"荣耀亲选"在开头被误匹配，跳过（保留它作为品牌）
+        continue;
+      }
+
+      // 其他前缀正常处理
+      // 匹配前缀在开头、前面是空格、或是"荣耀"
+      const pattern = new RegExp(`^${escapedPrefix}|\\s${escapedPrefix}`, 'g');
       result = result.replace(pattern, '').trim();
     }
+
+    // 处理"亲选荣耀" -> "荣耀亲选"的情况
+    // "亲选"是"荣耀亲选"的简称
+    if (result.startsWith('亲选荣耀')) {
+      result = result.replace(/^亲选荣耀/, '荣耀亲选 ').trim();
+    }
+
     iterations++;
   }
 
@@ -201,6 +221,7 @@ function convertToSystemFormat(skuName) {
   // 输入格式：MAGICBOOKPRO16202516吋 -> MagicBookPro16
   // 格式：MagicBookPro + 尺寸(2位) + 年份(4位) + 英寸(2位) + 吋
   // 例如：MAGICBOOKPRO16202516吋 = MagicBookPro + 16 + 2025 + 16 + 吋
+  // 注意：年份会被移除，但 MagicBook 年份检查会在 findBestMatch 中使用原始输入进行
   remaining = remaining.replace(/(MagicBookPro)(\d{2})(\d{4})(\d{1,2})吋/gi, '$1$2');
   remaining = remaining.replace(/(MagicBookArt)(\d{2})(\d{4})(\d{1,2})吋/gi, '$1$2');
   // 如果没有吋但有英寸
@@ -425,10 +446,27 @@ function extractMagicBookYear(str) {
  */
 function extractMagicBookYearFromRaw(str) {
   if (!str) return null;
-  // MagicBook 格式中的年份通常在尺寸数字之后，如 "MagicBookPro16202516吋" 中 2025 是年份
-  // 查找在尺寸数字(2位)后面紧跟的4位年份数字
-  const match = str.match(/MagicBook(?:Pro|Art)(\d{2})(20[2-3]\d)/i);
-  return match ? match[2] : null;
+  // MagicBook 格式中的年份通常在尺寸数字之后
+  // 格式1: "MagicBookPro16202516吋" - 尺寸(2位) + 年份(4位) 连续
+  // 格式2: "MagicBook Pro 16 2025款" - 尺寸 + 年份 + "款"
+  // 格式3: "MagicBook Pro 16 2025" - 尺寸 + 年份
+
+  // 尝试格式1: MagicBookPro/Art + 尺寸(2位) + 年份(4位)
+  let match = str.match(/MagicBook(?:Pro|Art)(\d{2})(20[2-3]\d)/i);
+  if (match) return match[2];
+
+  // 尝试格式2/3: "2025款" 或 "2025" 在 MagicBook Pro/Art + 尺寸之后
+  match = str.match(/MagicBook\s*(?:Pro|Art)\s*\d+\s*(20[2-3]\d)/i);
+  if (match) return match[1];
+
+  // 尝试直接从字符串中找 2024 或 2025（在 MagicBook 附近）
+  const lower = str.toLowerCase();
+  if (lower.includes('magicbook')) {
+    match = str.match(/(20[2-3]\d)/);
+    if (match) return match[1];
+  }
+
+  return null;
 }
 
 /**

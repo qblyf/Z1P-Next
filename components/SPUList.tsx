@@ -15,12 +15,12 @@ export default function SPUList(props: {
   offsetTop?: number;
 }) {
   const { onWandEditSPU, onAddClick, offsetTop = 24 } = props;
-  const { spuList, currentPage, pageSize, hasMore, loadPage } = useSpuListContext();
+  const { spuList, currentPage, pageSize, hasMore, loadPage, nameKeyword, setNameKeyword } = useSpuListContext();
   const { brandList } = useBrandListContext();
 
   const { spuID, setSpuID } = useSpuIDContext();
 
-  const [search, setSearch] = useState('');
+  const [searchInput, setSearchInput] = useState('');
   const el = useRef<HTMLDivElement>(null);
   const [height, setHeight] = useState(100);
 
@@ -32,18 +32,10 @@ export default function SPUList(props: {
     setHeight(window.innerHeight - rect.y - offsetTop);
   }, [el, offsetTop]);
 
-  const spuListFiltered = useMemo(() => {
-    const s = search.replaceAll(/\s/g, '').toLowerCase();
-    
-    if (s) {
-      return spuList.filter(spu =>
-        spu.name.replaceAll(/\s/g, '').toLowerCase().includes(s)
-      );
-    }
-    
-    // 数据已经在服务端按 order 字段降序排序，无需再次排序
-    return spuList;
-  }, [spuList, search]);
+  // 同步 nameKeyword 到本地输入状态
+  useEffect(() => {
+    setSearchInput(nameKeyword);
+  }, [nameKeyword]);
 
   return (
     <div ref={el}>
@@ -52,11 +44,15 @@ export default function SPUList(props: {
           <Input.Search
             size="small"
             style={{ marginTop: '4px', marginBottom: '4px' }}
-            value={search}
-            placeholder="搜索"
+            value={searchInput}
+            placeholder="搜索 SPU 名称"
             allowClear
             onChange={e => {
-              setSearch(e.target.value);
+              setSearchInput(e.target.value);
+            }}
+            onSearch={(value) => {
+              setNameKeyword(value);
+              loadPage(1, value);
             }}
           />
         </Col>
@@ -78,7 +74,7 @@ export default function SPUList(props: {
           )}
         </Col>
       </Row>
-      {spuListFiltered.length === pageSize && (
+      {spuList.length === pageSize && (
         <Alert
           message={`当前显示第 ${currentPage} 页数据，每页最多 ${pageSize} 条。`}
           type="info"
@@ -88,7 +84,7 @@ export default function SPUList(props: {
       <Table
         size="small"
         rowKey="id"
-        dataSource={spuListFiltered}
+        dataSource={spuList}
         showHeader={false}
         onRow={(record) => {
           return {
@@ -145,7 +141,7 @@ export default function SPUList(props: {
         pagination={{
           current: currentPage,
           pageSize: pageSize,
-          total: hasMore ? currentPage * pageSize + 1 : (currentPage - 1) * pageSize + spuListFiltered.length,
+          total: hasMore ? currentPage * pageSize + 1 : (currentPage - 1) * pageSize + spuList.length,
           showSizeChanger: false,
           onChange: (page) => {
             loadPage(page);
