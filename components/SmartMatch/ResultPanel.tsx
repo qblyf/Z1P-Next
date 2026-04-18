@@ -1,7 +1,7 @@
 'use client';
 
 import { Download, Search } from 'lucide-react';
-import { Button, Card, Space, Tag, Progress } from 'antd';
+import { Button, Card, Space, Tag } from 'antd';
 import { SyncOutlined } from '@ant-design/icons';
 import { ResultTable } from './ResultTable';
 import { ColumnSelector } from './ColumnSelector';
@@ -55,69 +55,16 @@ export function ResultPanel({
   onPageChange,
   matchProgress,
 }: ResultPanelProps) {
-  // 显示匹配进度状态
-  if (matchProgress && matchProgress.total > 0) {
-    const percent = Math.round((matchProgress.current / matchProgress.total) * 100);
-    // 使用传入的results而不是matchProgress.results
-    const matchedCount = results.filter(r => r.status === 'matched').length;
-    const unmatchedCount = results.filter(r => r.status === 'unmatched').length;
-
+  // 匹配中状态（不显示详细进度，避免频繁更新）
+  if (matchProgress) {
     return (
       <Card
-        className="flex-1 flex flex-col"
-        styles={{ body: { padding: '16px', display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' } }}
-        title={
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-3">
-              <SyncOutlined className="animate-spin" />
-              <span>匹配中...</span>
-              <div className="flex gap-2">
-                <Tag color="blue">
-                  总计：{matchProgress.total} 条
-                </Tag>
-                <Tag color="success">
-                  已匹配：{matchedCount} 条
-                </Tag>
-                <Tag color="error">
-                  未匹配：{unmatchedCount} 条
-                </Tag>
-              </div>
-            </div>
-          </div>
-        }
+        className="flex-1 flex items-center justify-center"
+        styles={{ body: { display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' } }}
       >
-        <div className="flex-1 overflow-hidden flex flex-col">
-          {/* 进度条 */}
-          <div className="mb-4 bg-slate-50 p-4 rounded-lg">
-            <div className="flex justify-between items-center mb-2">
-              <span className="text-sm text-slate-600">
-                正在匹配：{matchProgress.currentItem}
-              </span>
-              <span className="text-sm font-medium text-slate-700">
-                {matchProgress.current} / {matchProgress.total}
-              </span>
-            </div>
-            <Progress
-              percent={percent}
-              status="active"
-              strokeColor={{
-                '0%': '#108ee9',
-                '100%': '#87d068',
-              }}
-            />
-          </div>
-
-          {/* 实时结果表格 */}
-          <div className="flex-1 overflow-auto">
-            <ResultTable
-              results={results}
-              brandList={brandList}
-              visibleColumns={visibleColumns}
-              currentPage={currentPage}
-              pageSize={pageSize}
-              onPageChange={onPageChange}
-            />
-          </div>
+        <div className="text-center text-slate-500">
+          <SyncOutlined className="animate-spin text-2xl mb-2" />
+          <p>正在匹配 {matchProgress.total} 条数据...</p>
         </div>
       </Card>
     );

@@ -124,58 +124,36 @@ export default function SmartMatch() {
 
     console.log(`[Excel匹配] 开始匹配 ${inputs.length} 条数据`);
 
-    // 进度状态
-    let currentProgress = 0;
-    let currentItem = '';
-
     setMatchProgress({
       current: 0,
       total: inputs.length,
-      currentItem: '',
+      currentItem: '正在匹配...',
       results: null
     });
 
     try {
-      // 用于存储实时结果
-      const realTimeResults: UIMatchResult[] = [];
+      // 使用 MatchingOrchestrator 进行批量匹配（不使用进度回调）
+      const batchResult = await orchestrator.batchMatch(inputs);
 
-      // 使用 MatchingOrchestrator 进行批量匹配（带进度回调）
-      const batchResult = await orchestrator.batchMatch(inputs, (currentIndex, totalCount, currentInput, result) => {
-        currentProgress = currentIndex;
-        currentItem = currentInput.length > 30 ? currentInput.substring(0, 30) + '...' : currentInput;
-
-        if (result) {
-          const originalRow = inputToRowMap.get(currentInput);
-          const uiResult: UIMatchResult = {
-            inputName: result.inputName,
-            originalSkuName: originalRow?.productName,
-            matchedSKU: result.matchedInfo.sku || null,
-            matchedSPU: result.matchedInfo.spu || null,
-            matchedBrand: result.extractedInfo.brand || null,
-            matchedVersion: result.extractedInfo.version || null,
-            matchedMemory: result.extractedInfo.memory || null,
-            matchedColor: result.extractedInfo.color || null,
-            matchedGtins: originalRow?.gtin ? [originalRow.gtin] : result.matchedInfo.gtins || [],
-            similarity: result.similarity,
-            status: result.status as 'matched' | 'unmatched' | 'spu-matched',
-          };
-          realTimeResults.push(uiResult);
-        }
-
-        // 每5条或最后一条更新一次UI
-        if (currentIndex % 5 === 0 || currentIndex === totalCount) {
-          setResults([...realTimeResults]);
-          setMatchProgress({
-            current: currentProgress,
-            total: totalCount,
-            currentItem: currentItem,
-            results: null
-          });
-        }
+      // 转换结果格式，关联 GTIN
+      const uiResults: UIMatchResult[] = batchResult.results.map(result => {
+        const originalRow = inputToRowMap.get(result.inputName);
+        return {
+          inputName: result.inputName,
+          originalSkuName: originalRow?.productName,
+          matchedSKU: result.matchedInfo.sku || null,
+          matchedSPU: result.matchedInfo.spu || null,
+          matchedBrand: result.extractedInfo.brand || null,
+          matchedVersion: result.extractedInfo.version || null,
+          matchedMemory: result.extractedInfo.memory || null,
+          matchedColor: result.extractedInfo.color || null,
+          matchedGtins: originalRow?.gtin ? [originalRow.gtin] : result.matchedInfo.gtins || [],
+          similarity: result.similarity,
+          status: result.status as 'matched' | 'unmatched' | 'spu-matched',
+        };
       });
 
-      // 最终结果
-      setResults(realTimeResults);
+      setResults(uiResults);
       setMatchProgress(null);
 
       // 统计匹配结果
@@ -289,10 +267,6 @@ export default function SmartMatch() {
 
     const lines = inputText.split('\n').filter(line => line.trim());
 
-    // 进度状态（不包含results，避免频繁更新）
-    let currentProgress = 0;
-    let currentItem = '';
-
     setMatchProgress({
       current: 0,
       total: lines.length,
@@ -301,43 +275,24 @@ export default function SmartMatch() {
     });
 
     try {
-      // 用于存储实时结果
-      const realTimeResults: UIMatchResult[] = [];
+      // 使用 MatchingOrchestrator 进行批量匹配（不使用进度回调，直接获取结果）
+      const batchResult = await orchestrator.batchMatch(lines);
 
-      // 使用 MatchingOrchestrator 进行批量匹配（带进度回调）
-      const batchResult = await orchestrator.batchMatch(lines, (currentIndex, totalCount, currentInput, result) => {
-        currentProgress = currentIndex;
-        currentItem = currentInput.length > 30 ? currentInput.substring(0, 30) + '...' : currentInput;
+      // 匹配完成，一次性设置结果
+      const uiResults: UIMatchResult[] = batchResult.results.map(result => ({
+        inputName: result.inputName,
+        matchedSKU: result.matchedInfo.sku || null,
+        matchedSPU: result.matchedInfo.spu || null,
+        matchedBrand: result.extractedInfo.brand || null,
+        matchedVersion: result.extractedInfo.version || null,
+        matchedMemory: result.extractedInfo.memory || null,
+        matchedColor: result.extractedInfo.color || null,
+        matchedGtins: result.matchedInfo.gtins || [],
+        similarity: result.similarity,
+        status: result.status as 'matched' | 'unmatched' | 'spu-matched',
+      }));
 
-        if (result) {
-          const uiResult: UIMatchResult = {
-            inputName: result.inputName,
-            matchedSKU: result.matchedInfo.sku || null,
-            matchedSPU: result.matchedInfo.spu || null,
-            matchedBrand: result.extractedInfo.brand || null,
-            matchedVersion: result.extractedInfo.version || null,
-            matchedMemory: result.extractedInfo.memory || null,
-            matchedColor: result.extractedInfo.color || null,
-            matchedGtins: result.matchedInfo.gtins || [],
-            similarity: result.similarity,
-            status: result.status as 'matched' | 'unmatched' | 'spu-matched',
-          };
-          realTimeResults.push(uiResult);
-        }
-
-        // 每5条或最后一条更新一次UI
-        if (currentIndex % 5 === 0 || currentIndex === totalCount) {
-          setResults([...realTimeResults]);
-          setMatchProgress({
-            current: currentProgress,
-            total: totalCount,
-            currentItem: currentItem,
-            results: null
-          });
-        }
-      });
-
-      setResults(realTimeResults);
+      setResults(uiResults);
       setMatchProgress(null);
 
       message.success(`匹配完成，共处理 ${lines.length} 条记录，成功匹配 ${batchResult.summary.matched} 条`);
