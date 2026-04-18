@@ -546,7 +546,7 @@ export class MatchingOrchestrator {
         extractedInfo: extractedInfoDisplay,
         matchedInfo: {
           spu: matchedSpu,
-          sku: matchedSku ? String(skuMatchResult.match?.id || '') : null,
+          sku: matchedSku || null,
           gtins: [],
         },
       };
