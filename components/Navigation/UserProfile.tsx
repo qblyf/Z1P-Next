@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { LogOut, User, ChevronDown, ArrowLeft } from 'lucide-react';
+import { LogOut, User, ChevronDown, ArrowLeft, RefreshCw } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useTokenContext } from '../../datahooks/auth';
 import { setCacheToken } from '../../datahooks/auth';
@@ -20,6 +20,13 @@ export function UserProfile() {
       .then(data => setVersion(data.version))
       .catch(() => setVersion('1.0.0'));
   }, []);
+
+  const handleCheckUpdate = () => {
+    setIsOpen(false);
+    // 添加时间戳参数强制刷新页面
+    const timestamp = new Date().getTime();
+    window.location.href = `${window.location.pathname}?v=${timestamp}`;
+  };
 
   const handleLogout = () => {
     setCacheToken(null);
@@ -99,10 +106,18 @@ export function UserProfile() {
             <span className="text-sm">退出登录</span>
           </button>
 
-          <div className="px-4 py-2 border-t border-gray-200 mt-2 pt-2">
+          <div className="px-4 py-2 border-t border-gray-200 mt-2 pt-2 flex items-center justify-between">
             <p className="text-xs text-gray-400">
               版本 {version}
             </p>
+            <button
+              onClick={handleCheckUpdate}
+              className="flex items-center gap-1 text-xs text-blue-500 hover:text-blue-600 transition-colors"
+              title="检查更新"
+            >
+              <RefreshCw size={12} />
+              <span>检查更新</span>
+            </button>
           </div>
         </div>
       )}
