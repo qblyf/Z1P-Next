@@ -62,6 +62,12 @@ export const MENU_CONFIG: MenuItem[] = [
         icon: 'Zap',
       },
       {
+        id: 'smart-match-v2',
+        label: '在线匹配 V2',
+        href: '/smart-match-v2',
+        icon: 'Zap',
+      },
+      {
         id: 'gtin-query',
         label: '69码批量查询',
         href: '/gtin-query',
