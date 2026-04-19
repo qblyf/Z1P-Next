@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Settings } from 'lucide-react';
 import { Button, Checkbox, Dropdown } from 'antd';
-import { message } from '../../utils/notification';
+import { message } from 'antd';
 
 interface ColumnSelectorProps {
   visibleColumns: string[];

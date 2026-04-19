@@ -8,7 +8,7 @@ import { useSpuIDContext, useSpuListContext } from '../datahooks/product';
 import { useTokenContext } from '../datahooks/auth';
 import { lessAwait } from '../error';
 import { Z1P_ENDPOINT } from '../constants';
-import { message } from '../utils/notification';
+import { message } from 'antd';
 
 /**
  * [组件] SKU 列表

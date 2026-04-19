@@ -7,7 +7,7 @@ import { getBrandBaseList } from '@zsqk/z1-sdk/es/z1p/brand';
 import * as XLSX from 'xlsx';
 import { MatchingOrchestrator } from '../utils/services/MatchingOrchestrator';
 import type { BrandData } from '../utils/types';
-import { message } from '../utils/notification';
+import { message } from 'antd';
 
 /**
  * 表格数据接口

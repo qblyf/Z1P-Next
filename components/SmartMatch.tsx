@@ -10,7 +10,7 @@ import { parseExcelWithColumnSelection, createInputToRowMapGeneric, previewExcel
 import type { BrandData } from '../utils/types';
 import { InputPanel } from './SmartMatch/InputPanel';
 import { ResultPanel } from './SmartMatch/ResultPanel';
-import { message } from '../utils/notification';
+import { message } from 'antd';
 
 // 兼容的匹配结果类型（用于UI显示）
 interface UIMatchResult {

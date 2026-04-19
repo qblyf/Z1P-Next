@@ -16,7 +16,7 @@ import { UploadFile, UploadFileStatus } from 'antd/lib/upload/interface';
 import * as _ from 'lodash';
 import { DndProvider, DropTargetMonitor, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { message } from '../utils/notification';
+import { message } from 'antd';
 
 import {
   byte2str,
