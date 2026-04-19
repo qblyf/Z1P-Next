@@ -204,7 +204,7 @@ export function TableMatchComponent() {
         }
 
         // 从批量结果中查找对应的匹配结果
-        const matchResult = batchResult.results.find(r => r.inputName === productName);
+        const matchResult = batchResult.results.find(r => r !== null && r.inputName === productName);
         
         if (matchResult) {
           results.push({

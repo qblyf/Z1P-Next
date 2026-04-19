@@ -326,18 +326,20 @@ export default function SmartMatch() {
       });
 
       // 匹配完成，一次性设置结果
-      const uiResults: UIMatchResult[] = batchResult.results.map(result => ({
-        inputName: result.inputName,
-        matchedSKU: result.matchedInfo.sku || null,
-        matchedSPU: result.matchedInfo.spu || null,
-        matchedBrand: result.extractedInfo.brand || null,
-        matchedVersion: result.extractedInfo.version || null,
-        matchedMemory: result.extractedInfo.memory || null,
-        matchedColor: result.extractedInfo.color || null,
-        matchedGtins: result.matchedInfo.gtins || [],
-        similarity: result.similarity,
-        status: result.status as 'matched' | 'unmatched' | 'spu-matched',
-      }));
+      const uiResults: UIMatchResult[] = batchResult.results
+        .filter((r): r is NonNullable<typeof r> => r !== null)
+        .map(result => ({
+          inputName: result.inputName,
+          matchedSKU: result.matchedInfo.sku || null,
+          matchedSPU: result.matchedInfo.spu || null,
+          matchedBrand: result.extractedInfo.brand || null,
+          matchedVersion: result.extractedInfo.version || null,
+          matchedMemory: result.extractedInfo.memory || null,
+          matchedColor: result.extractedInfo.color || null,
+          matchedGtins: result.matchedInfo.gtins || [],
+          similarity: result.similarity,
+          status: result.status as 'matched' | 'unmatched' | 'spu-matched',
+        }));
 
       setResults(uiResults);
       setMatchProgress(null);
