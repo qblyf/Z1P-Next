@@ -1,7 +1,8 @@
 'use client';
 import { SPU, SPUCateID, SPUState } from '@zsqk/z1-sdk/es/z1p/alltypes';
 import { getSPUListNew, getSPUCateBaseList, getSPUInfo, editSPUInfo } from '@zsqk/z1-sdk/es/z1p/product';
-import { Button, Card, Col, Form, Input, Row, Select, Table, Cascader, Tag, Space, Divider, Modal, message, Drawer } from 'antd';
+import { Button, Card, Col, Form, Input, Row, Select, Table, Cascader, Tag, Space, Divider, Modal, Drawer } from 'antd';
+import { message } from '../../utils/notification';
 import { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import { Search, Edit } from 'lucide-react';

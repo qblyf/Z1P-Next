@@ -4,7 +4,8 @@
 import moment from 'moment';
 import 'moment/locale/zh-cn';
 
-import { Modal, Tag, Button, Drawer, message, Pagination } from 'antd';
+import { Modal, Tag, Button, Drawer, Pagination } from 'antd';
+import { message } from '../../utils/notification';
 import { EditTwoTone } from '@ant-design/icons';
 import {
   getUpdateLogList,

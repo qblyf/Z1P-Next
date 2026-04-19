@@ -1,6 +1,7 @@
 'use client'
 
-import { Avatar, Button, Col, Input, List, Row, message } from 'antd';
+import { Avatar, Button, Col, Input, List, Row } from 'antd';
+import { message } from '../../utils/notification';
 import { PageHeader } from '@ant-design/pro-components';
 import { type TextAreaRef } from 'antd/lib/input/TextArea';
 import Head from 'next/head';

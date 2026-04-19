@@ -1,7 +1,8 @@
 'use client';
 import { SPU, SPUCateID, SPUState } from '@zsqk/z1-sdk/es/z1p/alltypes';
 import { getSPUListNew, getSPUCateBaseList, editSPUInfo } from '@zsqk/z1-sdk/es/z1p/product';
-import { Button, Col, Form, Row, Select, Table, Tag, Alert, Space, Cascader, Drawer, Modal, message, Card, Input, Statistic } from 'antd';
+import { Button, Col, Form, Row, Select, Table, Tag, Alert, Space, Cascader, Drawer, Modal, Card, Input, Statistic } from 'antd';
+import { message } from '../../utils/notification';
 import { useState, useEffect, useMemo } from 'react';
 import Head from 'next/head';
 import { PageHeader } from '@ant-design/pro-components';

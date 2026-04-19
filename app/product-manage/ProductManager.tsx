@@ -1,5 +1,6 @@
 'use client';
-import { Drawer, message } from 'antd';
+import { Drawer } from 'antd';
+import { message } from '../../utils/notification';
 import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
 import { orderSPUCate, getSPUInfo, getSKUsInfo as getSKUsInfoAPI } from '@zsqk/z1-sdk/es/z1p/product';
