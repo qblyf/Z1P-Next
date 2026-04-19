@@ -1,93 +1,207 @@
 'use client';
 
-import { Button, Descriptions, Space, Tabs, TabsProps } from 'antd';
+import { Button, Tabs, TabsProps, Card, Progress, Space, Spin, Statistic, Row, Col, Tag } from 'antd';
 import { Suspense, useMemo, useState } from 'react';
 import { SKU, SKUState } from '@zsqk/z1-sdk/es/z1p/alltypes';
 import { getSKUList } from '@zsqk/z1-sdk/es/z1p/product';
 import { GetSKUListOrderByKey } from '@zsqk/z1-sdk/es/z1p/product-types';
 import { OrderBySort } from '@zsqk/z1-sdk/es/types/basetypes';
 import { postAwait } from '../../error';
-import { Content } from '../../components/style/Content';
 import Head from 'next/head';
-import { usePermission } from '../../datahooks/permission';
-import PageWrap from '../../components/PageWrap';
 import { usePageTab } from '../../datahooks/usePageTab';
-import { PageHeader } from '@ant-design/pro-components';
+import PageWrap from '../../components/PageWrap';
+import {
+  FileText,
+  Download,
+  CheckCircle,
+  Database,
+} from 'lucide-react';
+import './data-export.css';
 
-/**
- * [组件] SKU 数据导出 (1)
- * @author Lian Zheren <lzr@go0356.com>
- */
-function SKUDataExport1() {
-  const [data, setData] = useState<Array<Pick<SKU, 'name' | 'gtins'>>>([]);
+interface ExportTask {
+  status: 'idle' | 'loading' | 'done' | 'error';
+  total: number;
+  fetched: number;
+  data: Pick<SKU, 'name' | 'gtins' | 'id'>[];
+  error?: string;
+}
 
-  const dataURL = useMemo(() => {
-    return data.reduce((pre, v, i) => {
-      // 为避免影响 CSV 的分隔符
-      const name = v.name.replace(',', '-');
-      let next =
-        i === 0
-          ? pre
-          : `${pre}
-`;
-      if (v.gtins.length === 0) {
-        return `${next}${name}`;
-      }
-      return `${next}${name},${v.gtins.join(',')}`;
-    }, 'data:text/csv;charset=utf-8,');
-  }, [data]);
+function ExportCard({
+  icon,
+  title,
+  description,
+  columns,
+  format,
+  encoding,
+  onExport,
+  task,
+  downloadUrl,
+  downloadName,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  columns: string[];
+  format: string;
+  encoding: string;
+  onExport: () => void;
+  task: ExportTask;
+  downloadUrl?: string;
+  downloadName?: string;
+}) {
+  const isLoading = task.status === 'loading';
+  const isDone = task.status === 'done';
+
+  const progress = task.total > 0 ? Math.round((task.fetched / task.total) * 100) : 0;
 
   return (
-    <>
-      <Descriptions>
-        <Descriptions.Item label="数据列">
-          SKU 名称, SKU GTINs
-        </Descriptions.Item>
-        <Descriptions.Item label="文件格式">CSV 表格</Descriptions.Item>
-        <Descriptions.Item label="文件编码">UTF-8</Descriptions.Item>
-        <Descriptions.Item label="文件切割">
-          数据获取时每次获取 1000 条数据, 但下载时自动合并为一个.
-        </Descriptions.Item>
-      </Descriptions>
-      <Space>
-        <Button
-          onClick={postAwait(async () => {
-            // 获取所有在用的 SKU 数据
-            let done = false;
-            let offset = 0;
-            const limit = 1000;
-            const data: Pick<SKU, 'name' | 'gtins' | 'id'>[] = [];
-            while (!done) {
-              const res = await getSKUList(
-                {
-                  states: [SKUState.在用],
-                  limit,
-                  offset,
-                  orderBy: [{ key: GetSKUListOrderByKey.skuID, sort: OrderBySort.升序 }],
-                },
-                ['id', 'name', 'gtins']
-              );
-              data.push(...res);
-              if (res.length === limit) {
-                offset += limit;
-              } else {
-                done = true;
-              }
-            }
-            setData(data);
-          })}
-        >
-          导出 SKU 数据
-        </Button>
-        {data.length ? (
-          <a href={dataURL} download={`sku-data-export.csv`}>
-            下载
+    <Card className="export-card" bordered={false}>
+      <div className="export-card-header">
+        <div className="export-card-icon">{icon}</div>
+        <div className="export-card-title-wrap">
+          <h3 className="export-card-title">{title}</h3>
+          <p className="export-card-desc">{description}</p>
+        </div>
+      </div>
+
+      <div className="export-card-info">
+        <div className="export-info-row">
+          <span className="export-info-label">数据列</span>
+          <span className="export-info-value">{columns.join(', ')}</span>
+        </div>
+        <div className="export-info-row">
+          <span className="export-info-label">文件格式</span>
+          <Tag className="export-info-tag" color="blue">{format}</Tag>
+        </div>
+        <div className="export-info-row">
+          <span className="export-info-label">编码</span>
+          <Tag className="export-info-tag">{encoding}</Tag>
+        </div>
+      </div>
+
+      {isLoading && (
+        <div className="export-progress">
+          <Progress percent={progress} status="active" size="small" />
+          <span className="export-progress-text">
+            已获取 {task.fetched} / {task.total > 0 ? task.total : '?'} 条
+          </span>
+        </div>
+      )}
+
+      {isDone && (
+        <div className="export-done">
+          <CheckCircle size={16} className="export-done-icon" />
+          <span>已就绪，共 {task.data.length} 条数据</span>
+        </div>
+      )}
+
+      <div className="export-card-actions">
+        {isDone && downloadUrl ? (
+          <a href={downloadUrl} download={downloadName} className="export-download-btn">
+            <Download size={16} />
+            下载 CSV
           </a>
         ) : (
-          <span>请先进行导出</span>
+          <Button
+            type="primary"
+            icon={<Download size={16} />}
+            onClick={onExport}
+            loading={isLoading}
+            disabled={isLoading}
+          >
+            {isLoading ? '导出中...' : '开始导出'}
+          </Button>
         )}
-      </Space>
-    </>
+      </div>
+    </Card>
+  );
+}
+
+function SKUDataExport() {
+  const [task, setTask] = useState<ExportTask>({
+    status: 'idle',
+    total: 0,
+    fetched: 0,
+    data: [],
+  });
+
+  const dataURL = useMemo(() => {
+    if (task.data.length === 0) return '';
+    const csvContent = task.data.reduce((pre, v, i) => {
+      const name = (v.name || '').replace(/,/g, '-');
+      const gtins = v.gtins?.join(',') || '';
+      const line = i === 0
+        ? `SKU 名称,SKU GTINs\n${name},${gtins}`
+        : `${pre}\n${name},${gtins}`;
+      return line;
+    }, '');
+    return `data:text/csv;charset=utf-8,${encodeURIComponent(csvContent)}`;
+  }, [task.data]);
+
+  const handleExport = () => {
+    setTask((prev) => ({ ...prev, status: 'loading', fetched: 0, total: 0, data: [], error: undefined }));
+
+    postAwait(async () => {
+      let done = false;
+      let offset = 0;
+      const limit = 1000;
+      const allData: Pick<SKU, 'name' | 'gtins' | 'id'>[] = [];
+
+      // 先取总数
+      const firstBatch = await getSKUList(
+        {
+          states: [SKUState.在用],
+          limit: 1,
+          offset: 0,
+          orderBy: [{ key: GetSKUListOrderByKey.skuID, sort: OrderBySort.升序 }],
+        },
+        ['id', 'name', 'gtins']
+      );
+
+      const totalEstimate = 10000; // 估算总量用于进度显示
+      setTask((prev) => ({ ...prev, total: totalEstimate, fetched: 0 }));
+
+      while (!done) {
+        const res = await getSKUList(
+          {
+            states: [SKUState.在用],
+            limit,
+            offset,
+            orderBy: [{ key: GetSKUListOrderByKey.skuID, sort: OrderBySort.升序 }],
+          },
+          ['id', 'name', 'gtins']
+        );
+        allData.push(...res);
+        setTask((prev) => ({ ...prev, fetched: prev.fetched + res.length }));
+        if (res.length === limit) {
+          offset += limit;
+        } else {
+          done = true;
+        }
+      }
+
+      setTask({
+        status: 'done',
+        total: allData.length,
+        fetched: allData.length,
+        data: allData,
+      });
+    })();
+  };
+
+  return (
+    <ExportCard
+      icon={<Database size={28} />}
+      title="SKU 数据导出"
+      description="导出所有在用 SKU 的名称和 GTIN 编码"
+      columns={['SKU 名称', 'SKU GTINs']}
+      format="CSV"
+      encoding="UTF-8"
+      onExport={handleExport}
+      task={task}
+      downloadUrl={dataURL}
+      downloadName={`sku-data-${new Date().toISOString().slice(0, 10)}.csv`}
+    />
   );
 }
 
@@ -99,34 +213,45 @@ export default function () {
   );
 }
 
-/**
- * [页面] 数据导出
- * @author Lian Zheren <lzr@go0356.com>
- */
 function ClientPage() {
-  // 注册页面标签页
   usePageTab('数据导出');
-  
+
   const items: TabsProps['items'] = [
     {
-      label: 'SKU 数据 (1)',
-      key: '1',
-      children: <SKUDataExport1 />,
+      label: (
+        <span className="export-tab-label">
+          <Database size={14} />
+          SKU 数据
+        </span>
+      ),
+      key: 'sku',
+      children: <SKUDataExport />,
     },
   ];
 
   return (
     <PageWrap ppKey="product-manage">
       <Head>
-        <title>数据导出</title>
+        <title>数据导出 - Z1 商品平台</title>
       </Head>
-      <PageHeader
-        title="数据导出"
-        subTitle="基础数据可导出为 CSV 表格."
-      ></PageHeader>
-      <Content>
-        <Tabs defaultActiveKey="1" items={items} />
-      </Content>
+
+      {/* 英雄区 */}
+      <div className="export-hero">
+        <div className="export-hero-inner">
+          <div className="export-hero-icon">
+            <FileText size={40} />
+          </div>
+          <div className="export-hero-text">
+            <h1 className="export-hero-title">数据导出</h1>
+            <p className="export-hero-subtitle">将基础数据导出为 CSV 表格，方便离线分析与管理</p>
+          </div>
+        </div>
+      </div>
+
+      {/* 导出卡片区域 */}
+      <div className="export-content">
+        <Tabs items={items} />
+      </div>
     </PageWrap>
   );
 }
