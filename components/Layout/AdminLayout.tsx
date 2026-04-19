@@ -87,7 +87,7 @@ export const AdminLayout = memo(function AdminLayout({ children }: AdminLayoutPr
             <TabBar />
           </div>
           
-          {/* 可滚动的内容区域 */}
+          {/* 可滚动的内容区域 - v2 */}
           <div className="flex-1 overflow-auto">
             <div className="p-6">
               <Suspense fallback={<PageSkeleton rows={6} />}>
