@@ -153,15 +153,10 @@ export function InputArea({ onMatch }: InputAreaProps) {
       return;
     }
 
-    // 更新输入框
+    // 只更新输入框，不自动开始匹配
     setInputText(productNames.join('\n'));
 
-    // 自动开始匹配
-    clearResults();
-    startMatch(productNames);
-    onMatch?.();
-
-    message.success(`成功解析 ${productNames.length} 条数据`);
+    message.success(`已导入 ${productNames.length} 条数据，请点击"开始匹配"`);
     handleModalClose();
   };
 
