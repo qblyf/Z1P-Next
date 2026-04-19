@@ -102,6 +102,7 @@ function useToken() {
   const [token, setToken] = useState<string | null>(null);
   const [errMsg, setErrMsg] = useState<string>();
   const [isTokenExpired, setIsTokenExpired] = useState(false);
+  // isInitialized 标记 token 初始化是否完成，用于避免 hydration 不匹配
   const [isInitialized, setIsInitialized] = useState(false);
 
   // 监听 localStorage 变化（来自其他标签页或同一页面的更新）
