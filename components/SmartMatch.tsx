@@ -425,6 +425,22 @@ export default function SmartMatch() {
   }
 
   return (
+    <>
+      {/* 匹配中遮罩层 - 阻止用户操作其他区域 */}
+      {loading && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center"
+          style={{ backgroundColor: 'rgba(0, 0, 0, 0.6)' }}
+          onClick={() => message.warning('陛下莫急，请耐心等待')}
+        >
+          <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center">
+            <Spin size="large" className="mb-4" />
+            <p className="text-lg font-medium text-gray-700">正在匹配中...</p>
+            <p className="text-sm text-gray-500 mt-1">陛下莫急，请耐心等待</p>
+          </div>
+        </div>
+      )}
+
     <div className="flex gap-4 h-[calc(100vh-140px)]">
       {/* 左侧：输入区域 */}
       <div className="w-1/3 flex flex-col">
@@ -554,5 +570,6 @@ export default function SmartMatch() {
         </div>
       </Modal>
     </div>
+    </>
   );
 }
