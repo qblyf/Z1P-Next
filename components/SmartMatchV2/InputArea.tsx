@@ -137,6 +137,7 @@ export function InputArea({ onMatch }: InputAreaProps) {
   };
 
   // 确认选择列并提取数据
+  const handleColumnConfirm = () => {
     if (!selectedColumn || excelData.length === 0) {
       message.warning('请选择有效列');
       return;
