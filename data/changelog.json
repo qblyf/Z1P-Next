@@ -1,10 +1,19 @@
 [
   {
+    "hash": "f7c3fd5",
+    "shortHash": "f7c3fd5",
+    "message": "[v1.0.63] refactor: 更新日志改为从 JSON 文件读取",
+    "author": "Harmony",
+    "date": "2026-04-19 21:41:20 +0800",
+    "version": "1.0.63",
+    "humanReadable": "更新日志改为从 JSON 文件读取"
+  },
+  {
     "hash": "eec6611",
     "shortHash": "eec6611",
     "message": "[v1.0.62] refactor: 更新日志改为静态数据",
     "author": "Harmony",
-    "date": "2026-04-19 21:40:00 +0800",
+    "date": "2026-04-19 21:38:01 +0800",
     "version": "1.0.62",
     "humanReadable": "更新日志改为静态数据"
   },
@@ -13,7 +22,7 @@
     "shortHash": "9d83b3d",
     "message": "[v1.0.61] chore: 添加 git log 调试日志",
     "author": "Harmony",
-    "date": "2026-04-19 21:32:00 +0800",
+    "date": "2026-04-19 21:30:25 +0800",
     "version": "1.0.61",
     "humanReadable": "添加 git log 调试日志"
   },
@@ -58,7 +67,7 @@
     "shortHash": "5683522",
     "message": "[v1.0.56] refactor: 删除老版在线匹配功能，仅保留在线匹配V2",
     "author": "Harmony",
-    "date": "2026-04-19 21:08:00 +0800",
+    "date": "2026-04-19 21:13:26 +0800",
     "version": "1.0.56",
     "humanReadable": "删除老版在线匹配功能，仅保留在线匹配V2"
   },
@@ -67,7 +76,7 @@
     "shortHash": "0636e2e",
     "message": "[v1.0.55] feat: SmartMatchV2 匹配结果支持导出 Excel",
     "author": "Harmony",
-    "date": "2026-04-19 20:59:00 +0800",
+    "date": "2026-04-19 21:10:25 +0800",
     "version": "1.0.55",
     "humanReadable": "SmartMatchV2 匹配结果支持导出 Excel"
   },
@@ -76,7 +85,7 @@
     "shortHash": "4ee65c0",
     "message": "[v1.0.54] fix: SmartMatchV2 导入 Excel 后不自动匹配",
     "author": "Harmony",
-    "date": "2026-04-19 20:53:00 +0800",
+    "date": "2026-04-19 21:08:47 +0800",
     "version": "1.0.54",
     "humanReadable": "SmartMatchV2 导入 Excel 后不自动匹配"
   },
@@ -85,7 +94,7 @@
     "shortHash": "fe393e5",
     "message": "[v1.0.53] chore: ResultTable 筛选仅保留已匹配和未匹配",
     "author": "Harmony",
-    "date": "2026-04-19 20:48:00 +0800",
+    "date": "2026-04-19 21:01:58 +0800",
     "version": "1.0.53",
     "humanReadable": "ResultTable 筛选仅保留已匹配和未匹配"
   },
@@ -94,7 +103,7 @@
     "shortHash": "e3b1e6f",
     "message": "[v1.0.52] feat: SmartMatchV2 蒙版增加匹配进度显示",
     "author": "Harmony",
-    "date": "2026-04-19 20:42:00 +0800",
+    "date": "2026-04-19 21:01:28 +0800",
     "version": "1.0.52",
     "humanReadable": "SmartMatchV2 蒙版增加匹配进度显示"
   },
@@ -103,7 +112,7 @@
     "shortHash": "a9c27b5",
     "message": "[v1.0.51] feat: SmartMatchV2 添加全局蒙版避免匹配中用户操作",
     "author": "Harmony",
-    "date": "2026-04-19 20:38:00 +0800",
+    "date": "2026-04-19 20:55:00 +0800",
     "version": "1.0.51",
     "humanReadable": "SmartMatchV2 添加全局蒙版避免匹配中用户操作"
   },
@@ -112,8 +121,422 @@
     "shortHash": "233d026",
     "message": "[v1.0.50] fix: 禁用版本 API 缓存解决版本号显示滞后",
     "author": "Harmony",
-    "date": "2026-04-19 20:32:00 +0800",
+    "date": "2026-04-19 20:52:54 +0800",
     "version": "1.0.50",
     "humanReadable": "禁用版本 API 缓存解决版本号显示滞后"
+  },
+  {
+    "hash": "517b39b",
+    "shortHash": "517b39b",
+    "message": "[v1.0.49] fix: MatchContext 重新添加被误删的 use state 导入",
+    "author": "Harmony",
+    "date": "2026-04-19 20:45:12 +0800",
+    "version": "1.0.49",
+    "humanReadable": "MatchContext 重新添加被误删的 use state 导入"
+  },
+  {
+    "hash": "3ea20ac",
+    "shortHash": "3ea20ac",
+    "message": "[v1.0.48] fix: SmartMatchV2 修复 handleColumnConfirm 函数声明丢失",
+    "author": "Harmony",
+    "date": "2026-04-19 20:43:49 +0800",
+    "version": "1.0.48",
+    "humanReadable": "SmartMatchV2 修复 handleColumnConfirm 函数声明丢失"
+  },
+  {
+    "hash": "d35f311",
+    "shortHash": "d35f311",
+    "message": "[v1.0.47] fix: SmartMatchV2 修复 UploadRequestFile 类型问题",
+    "author": "Harmony",
+    "date": "2026-04-19 20:42:53 +0800",
+    "version": "1.0.47",
+    "humanReadable": "SmartMatchV2 修复 UploadRequestFile 类型问题"
+  },
+  {
+    "hash": "dbc19f8",
+    "shortHash": "dbc19f8",
+    "message": "[v1.0.46] chore: 清理 SmartMatchV2 代码",
+    "author": "Harmony",
+    "date": "2026-04-19 20:42:14 +0800",
+    "version": "1.0.46",
+    "humanReadable": "清理 SmartMatchV2 代码"
+  },
+  {
+    "hash": "fd20c3f",
+    "shortHash": "fd20c3f",
+    "message": "[v1.0.45] chore: 清理 SmartMatchV2 代码",
+    "author": "Harmony",
+    "date": "2026-04-19 20:39:10 +0800",
+    "version": "1.0.45",
+    "humanReadable": "清理 SmartMatchV2 代码"
+  },
+  {
+    "hash": "930ef4a",
+    "shortHash": "930ef4a",
+    "message": "[v1.0.44] fix: SmartMatchV2 Excel 解析改为使用 ArrayBuffer",
+    "author": "Harmony",
+    "date": "2026-04-19 20:38:39 +0800",
+    "version": "1.0.44",
+    "humanReadable": "SmartMatchV2 Excel 解析改为使用 ArrayBuffer"
+  },
+  {
+    "hash": "4626dc3",
+    "shortHash": "4626dc3",
+    "message": "[v1.0.43] fix: 修复 JSX 语法错误",
+    "author": "Harmony",
+    "date": "2026-04-19 20:35:43 +0800",
+    "version": "1.0.43",
+    "humanReadable": "修复 JSX 语法错误"
+  },
+  {
+    "hash": "9776e63",
+    "shortHash": "9776e63",
+    "message": "[v1.0.42] fix: SmartMatchV2 Excel 导入改为用户选择列",
+    "author": "Harmony",
+    "date": "2026-04-19 20:32:17 +0800",
+    "version": "1.0.42",
+    "humanReadable": "SmartMatchV2 Excel 导入改为用户选择列"
+  },
+  {
+    "hash": "4aa879e",
+    "shortHash": "4aa879e",
+    "message": "[v1.0.41] refactor: SmartMatchV2 性能优化和清理",
+    "author": "Harmony",
+    "date": "2026-04-19 20:31:05 +0800",
+    "version": "1.0.41",
+    "humanReadable": "SmartMatchV2 性能优化和清理"
+  },
+  {
+    "hash": "437f0d1",
+    "shortHash": "437f0d1",
+    "message": "[v1.0.40] refactor: 清理 SmartMatchV2 InputArea 冗余代码",
+    "author": "Harmony",
+    "date": "2026-04-19 20:27:48 +0800",
+    "version": "1.0.40",
+    "humanReadable": "清理 SmartMatchV2 InputArea 冗余代码"
+  },
+  {
+    "hash": "14b561d",
+    "shortHash": "14b561d",
+    "message": "[v1.0.39] fix: SmartMatchV2 初始化死循环问题",
+    "author": "Harmony",
+    "date": "2026-04-19 20:26:50 +0800",
+    "version": "1.0.39",
+    "humanReadable": "SmartMatchV2 初始化死循环问题"
+  },
+  {
+    "hash": "c0dea8a",
+    "shortHash": "c0dea8a",
+    "message": "[v1.0.38] chore: 添加 isInitialized 注释说明",
+    "author": "Harmony",
+    "date": "2026-04-19 20:21:12 +0800",
+    "version": "1.0.38",
+    "humanReadable": "添加 isInitialized 注释说明"
+  },
+  {
+    "hash": "391b0c7",
+    "shortHash": "391b0c7",
+    "message": "[v1.0.37] fix: 修复 useToken hook 的 hydration 不匹配和 bug",
+    "author": "Harmony",
+    "date": "2026-04-19 20:19:41 +0800",
+    "version": "1.0.37",
+    "humanReadable": "修复 useToken hook 的 hydration 不匹配和 bug"
+  },
+  {
+    "hash": "67b066c",
+    "shortHash": "67b066c",
+    "message": "[v1.0.36] v1.0.36 trigger deploy",
+    "author": "Harmony",
+    "date": "2026-04-19 19:26:48 +0800",
+    "version": "1.0.36",
+    "humanReadable": "v1.0.36 trigger deploy"
+  },
+  {
+    "hash": "65d1ec6",
+    "shortHash": "65d1ec6",
+    "message": "[v1.0.35] fix: 使用 dynamic import 禁用 SSR 解决水合错误",
+    "author": "Harmony",
+    "date": "2026-04-19 19:25:46 +0800",
+    "version": "1.0.35",
+    "humanReadable": "使用 dynamic import 禁用 SSR 解决水合错误"
+  },
+  {
+    "hash": "40beb2b",
+    "shortHash": "40beb2b",
+    "message": "[v1.0.34] v1.0.34 trigger deploy",
+    "author": "Harmony",
+    "date": "2026-04-19 19:24:11 +0800",
+    "version": "1.0.34",
+    "humanReadable": "v1.0.34 trigger deploy"
+  },
+  {
+    "hash": "4fae574",
+    "shortHash": "4fae574",
+    "message": "[v1.0.33] fix: 修复 SmartMatchV2 水合错误，添加 mounted 状态",
+    "author": "Harmony",
+    "date": "2026-04-19 19:23:11 +0800",
+    "version": "1.0.33",
+    "humanReadable": "修复 SmartMatchV2 水合错误，添加 mounted 状态"
+  },
+  {
+    "hash": "11b1ca5",
+    "shortHash": "11b1ca5",
+    "message": "[v1.0.32] chore: ignore playwright-mcp debug files",
+    "author": "Harmony",
+    "date": "2026-04-19 19:20:53 +0800",
+    "version": "1.0.32",
+    "humanReadable": "ignore playwright-mcp debug files"
+  },
+  {
+    "hash": "c19c057",
+    "shortHash": "c19c057",
+    "message": "[v1.0.31] v1.0.31 trigger deploy",
+    "author": "Harmony",
+    "date": "2026-04-19 19:20:04 +0800",
+    "version": "1.0.31",
+    "humanReadable": "v1.0.31 trigger deploy"
+  },
+  {
+    "hash": "bf9d576",
+    "shortHash": "bf9d576",
+    "message": "[v1.0.30] fix: 回滚页面骨架屏加载逻辑，修复在线匹配V2页面无法显示问题",
+    "author": "Harmony",
+    "date": "2026-04-19 19:08:31 +0800",
+    "version": "1.0.30",
+    "humanReadable": "回滚页面骨架屏加载逻辑，修复在线匹配V2页面无法显示问题"
+  },
+  {
+    "hash": "4318207",
+    "shortHash": "4318207",
+    "message": "[v1.0.28] feat: 页面切换时显示骨架屏",
+    "author": "Harmony",
+    "date": "2026-04-19 18:58:39 +0800",
+    "version": "1.0.28",
+    "humanReadable": "页面切换时显示骨架屏"
+  },
+  {
+    "hash": "f2d4246",
+    "shortHash": "f2d4246",
+    "message": "[v1.0.27] feat: 添加在线匹配V2到菜单",
+    "author": "Harmony",
+    "date": "2026-04-19 18:42:13 +0800",
+    "version": "1.0.27",
+    "humanReadable": "添加在线匹配V2到菜单"
+  },
+  {
+    "hash": "325ec91",
+    "shortHash": "325ec91",
+    "message": "[v1.0.26] fix: 修复更新日志 API 在 Vercel 环境中路径问题",
+    "author": "Harmony",
+    "date": "2026-04-19 18:30:08 +0800",
+    "version": "1.0.26",
+    "humanReadable": "修复更新日志 API 在 Vercel 环境中路径问题"
+  },
+  {
+    "hash": "7846014",
+    "shortHash": "7846014",
+    "message": "[v1.0.25] feat: 新增在线匹配页面 V2 (smart-match-v2)",
+    "author": "Harmony",
+    "date": "2026-04-19 18:12:32 +0800",
+    "version": "1.0.25",
+    "humanReadable": "新增在线匹配页面 V2 (smart-match-v2)"
+  },
+  {
+    "hash": "f8d2bd4",
+    "shortHash": "f8d2bd4",
+    "message": "[v1.0.24] debug: 添加遮罩层调试日志",
+    "author": "Harmony",
+    "date": "2026-04-19 18:00:34 +0800",
+    "version": "1.0.24",
+    "humanReadable": "添加遮罩层调试日志"
+  },
+  {
+    "hash": "efa2610",
+    "shortHash": "efa2610",
+    "message": "[v1.0.23] fix: 使用 requestAnimationFrame 批量更新进度状态",
+    "author": "Harmony",
+    "date": "2026-04-19 17:52:30 +0800",
+    "version": "1.0.23",
+    "humanReadable": "使用 requestAnimationFrame 批量更新进度状态"
+  },
+  {
+    "hash": "6493e84",
+    "shortHash": "6493e84",
+    "message": "[v1.0.24] fix: 修复骨架屏 hydration mismatch 问题",
+    "author": "Harmony",
+    "date": "2026-04-19 17:32:03 +0800",
+    "version": "1.0.24",
+    "humanReadable": "修复骨架屏 hydration mismatch 问题"
+  },
+  {
+    "hash": "38c9212",
+    "shortHash": "38c9212",
+    "message": "[v1.0.23] fix: 修复骨架屏 hydration mismatch 警告",
+    "author": "Harmony",
+    "date": "2026-04-19 17:25:14 +0800",
+    "version": "1.0.23",
+    "humanReadable": "修复骨架屏 hydration mismatch 警告"
+  },
+  {
+    "hash": "ac2aa9c",
+    "shortHash": "ac2aa9c",
+    "message": "[v1.0.22] feat: 用户菜单增加检查更新功能",
+    "author": "Harmony",
+    "date": "2026-04-19 17:18:00 +0800",
+    "version": "1.0.22",
+    "humanReadable": "用户菜单增加检查更新功能"
+  },
+  {
+    "hash": "09eadc2",
+    "shortHash": "09eadc2",
+    "message": "[v1.0.21] fix: 修复遮罩层不显示问题（改用 Promise.resolve 代替 setTimeout）",
+    "author": "Harmony",
+    "date": "2026-04-19 17:11:10 +0800",
+    "version": "1.0.21",
+    "humanReadable": "修复遮罩层不显示问题（改用 Promise.resolve 代替 setTimeout）"
+  },
+  {
+    "hash": "e41728a",
+    "shortHash": "e41728a",
+    "message": "[v1.0.20] fix: 修复匹配时遮罩层不显示的问题",
+    "author": "Harmony",
+    "date": "2026-04-19 17:08:11 +0800",
+    "version": "1.0.20",
+    "humanReadable": "修复匹配时遮罩层不显示的问题"
+  },
+  {
+    "hash": "9d2ed75",
+    "shortHash": "9d2ed75",
+    "message": "[v1.0.19] feat: 优化页面加载体验 - 添加骨架屏并统一提示为侧边弹出",
+    "author": "Harmony",
+    "date": "2026-04-19 16:24:51 +0800",
+    "version": "1.0.19",
+    "humanReadable": "优化页面加载体验 - 添加骨架屏并统一提示为侧边弹出"
+  },
+  {
+    "hash": "8964380",
+    "shortHash": "8964380",
+    "message": "[v1.0.17] fix: 修复 React error #185 - message 包装对象导致 hooks 上下文错误",
+    "author": "Harmony",
+    "date": "2026-04-19 12:26:20 +0800",
+    "version": "1.0.17",
+    "humanReadable": "修复 React error #185 - message 包装对象导致 hooks 上下文错误"
+  },
+  {
+    "hash": "35d9fe3",
+    "shortHash": "35d9fe3",
+    "message": "[v1.0.16] fix: 修复商品管理等页面提示仍在中间的问题",
+    "author": "Harmony",
+    "date": "2026-04-19 12:19:26 +0800",
+    "version": "1.0.16",
+    "humanReadable": "修复商品管理等页面提示仍在中间的问题"
+  },
+  {
+    "hash": "ff293a3",
+    "shortHash": "ff293a3",
+    "message": "[v1.0.15] fix: 修复匹配报错和遮罩层显示问题",
+    "author": "Harmony",
+    "date": "2026-04-19 12:17:34 +0800",
+    "version": "1.0.15",
+    "humanReadable": "修复匹配报错和遮罩层显示问题"
+  },
+  {
+    "hash": "09c312b",
+    "shortHash": "09c312b",
+    "message": "[v1.0.14] feat: 匹配中显示遮罩层并提示用户",
+    "author": "Harmony",
+    "date": "2026-04-19 12:13:19 +0800",
+    "version": "1.0.14",
+    "humanReadable": "匹配中显示遮罩层并提示用户"
+  },
+  {
+    "hash": "38ad4f5",
+    "shortHash": "38ad4f5",
+    "message": "[v1.0.13] feat: 全局配置所有提示为侧边弹出",
+    "author": "Harmony",
+    "date": "2026-04-19 12:10:34 +0800",
+    "version": "1.0.13",
+    "humanReadable": "全局配置所有提示为侧边弹出"
+  },
+  {
+    "hash": "ab275fe",
+    "shortHash": "ab275fe",
+    "message": "[v1.0.12] perf: 恢复初始化时全量加载SKU数据",
+    "author": "Harmony",
+    "date": "2026-04-19 12:06:45 +0800",
+    "version": "1.0.12",
+    "humanReadable": "恢复初始化时全量加载SKU数据"
+  },
+  {
+    "hash": "46aafaa",
+    "shortHash": "46aafaa",
+    "message": "[v1.0.11] fix: 将同步失败的错误码转为人类可读文字",
+    "author": "Harmony",
+    "date": "2026-04-19 12:00:52 +0800",
+    "version": "1.0.11",
+    "humanReadable": "将同步失败的错误码转为人类可读文字"
+  },
+  {
+    "hash": "3343c54",
+    "shortHash": "3343c54",
+    "message": "[v1.0.10] fix: 修复匹配进度日志不显示的问题",
+    "author": "Harmony",
+    "date": "2026-04-19 11:55:10 +0800",
+    "version": "1.0.10",
+    "humanReadable": "修复匹配进度日志不显示的问题"
+  },
+  {
+    "hash": "bfea3ce",
+    "shortHash": "bfea3ce",
+    "message": "[v1.0.9] fix: 修复结果表格不显示SKU的问题",
+    "author": "Harmony",
+    "date": "2026-04-19 11:51:39 +0800",
+    "version": "1.0.9",
+    "humanReadable": "修复结果表格不显示SKU的问题"
+  },
+  {
+    "hash": "5acb7be",
+    "shortHash": "5acb7be",
+    "message": "[v1.0.8] feat: 匹配进度改为主功能区显示",
+    "author": "Harmony",
+    "date": "2026-04-19 11:49:56 +0800",
+    "version": "1.0.8",
+    "humanReadable": "匹配进度改为主功能区显示"
+  },
+  {
+    "hash": "b7c5d5e",
+    "shortHash": "b7c5d5e",
+    "message": "[v1.0.7] fix: 修复 batchMatch 结果的 null 类型检查",
+    "author": "Harmony",
+    "date": "2026-04-19 11:40:46 +0800",
+    "version": "1.0.7",
+    "humanReadable": "修复 batchMatch 结果的 null 类型检查"
+  },
+  {
+    "hash": "c4a701a",
+    "shortHash": "c4a701a",
+    "message": "[v1.0.6] fix: 修复 PageWrap ppKey 类型错误",
+    "author": "Harmony",
+    "date": "2026-04-19 11:40:02 +0800",
+    "version": "1.0.6",
+    "humanReadable": "修复 PageWrap ppKey 类型错误"
+  },
+  {
+    "hash": "988923d",
+    "shortHash": "988923d",
+    "message": "[v1.0.5] fix: 修复 changelog API 类型错误",
+    "author": "Harmony",
+    "date": "2026-04-19 11:37:57 +0800",
+    "version": "1.0.5",
+    "humanReadable": "修复 changelog API 类型错误"
+  },
+  {
+    "hash": "97f0444",
+    "shortHash": "97f0444",
+    "message": "[v1.0.4] fix: 修复 SmartMatch 结果 map 类型错误",
+    "author": "Harmony",
+    "date": "2026-04-19 11:34:22 +0800",
+    "version": "1.0.4",
+    "humanReadable": "修复 SmartMatch 结果 map 类型错误"
   }
 ]
