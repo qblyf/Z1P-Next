@@ -104,6 +104,7 @@ const MatchContext = createContext<MatchContextValue | null>(null);
 export function MatchProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(matchReducer, initialState);
   const orchestratorRef = useRef<MatchingOrchestrator | null>(null);
+  const [orchestratorInitialized, setOrchestratorInitialized] = useState(false);
   const isCancelledRef = useRef(false);
   const batchCountRef = useRef(0);
 
@@ -122,6 +123,7 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
       await orchestrator.initialize(brands, []);
 
       orchestratorRef.current = orchestrator;
+      setOrchestratorInitialized(true);
       dispatch({ type: 'SET_STATUS', payload: 'ready' });
     } catch (error) {
       console.error('初始化匹配器失败:', error);
@@ -260,13 +262,13 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
     () => ({
       state,
       orchestrator: orchestratorRef.current,
-      isInitialized: !!orchestratorRef.current,
+      isInitialized: orchestratorInitialized,
       initialize,
       startMatch,
       cancelMatch,
       clearResults,
     }),
-    [state, initialize, startMatch, cancelMatch, clearResults]
+    [state, orchestratorInitialized, initialize, startMatch, cancelMatch, clearResults]
   );
 
   return <MatchContext.Provider value={value}>{children}</MatchContext.Provider>;
