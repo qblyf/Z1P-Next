@@ -6,11 +6,18 @@ import { MatchProvider, useMatch } from './MatchContext';
 import { StatsCards } from './StatsCards';
 import { InputArea } from './InputArea';
 import { ResultTable } from './ResultTable';
+import { useState, useEffect } from 'react';
 
 function SmartMatchContent() {
   const { state } = useMatch();
+  const [mounted, setMounted] = useState(false);
 
-  if (state.status === 'idle' || state.status === 'initializing') {
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // 服务端渲染或未挂载时，显示加载状态
+  if (!mounted || state.status === 'idle' || state.status === 'initializing') {
     return (
       <div className="flex items-center justify-center h-64">
         <Spin indicator={<LoadingOutlined style={{ fontSize: 32 }} spin />} tip="初始化中..." />
