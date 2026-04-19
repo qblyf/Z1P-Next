@@ -80,8 +80,17 @@ export function InputArea({ onMatch }: InputAreaProps) {
     const xlsx = await import('xlsx');
 
     try {
-      // file 是 File 对象，需要转为 ArrayBuffer
-      const arrayBuffer = await file.arrayBuffer();
+      let arrayBuffer: ArrayBuffer;
+
+      if (typeof file === 'string') {
+        // 如果是字符串（base64 或 URL），需要先获取
+        const response = await fetch(file);
+        arrayBuffer = await response.arrayBuffer();
+      } else {
+        // File 对象直接转为 ArrayBuffer
+        arrayBuffer = await file.arrayBuffer();
+      }
+
       const wb = xlsx.read(arrayBuffer, { type: 'array' });
       const ws = wb.Sheets[wb.SheetNames[0]];
       const data = xlsx.utils.sheet_to_json(ws);
