@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect, useRef } from 'react';
-import { Input, Button, Upload, Card, Space, message, Typography } from 'antd';
+import { Input, Button, Upload, Card, Space, message, Typography, Modal, Select } from 'antd';
 import { UploadOutlined, ClearOutlined, PlayCircleOutlined, FileExcelOutlined } from '@ant-design/icons';
 import type { UploadProps } from 'antd';
 import { useMatch } from './MatchContext';
@@ -16,6 +16,10 @@ interface InputAreaProps {
 export function InputArea({ onMatch }: InputAreaProps) {
   const [inputText, setInputText] = useState('');
   const [isReady, setIsReady] = useState(false);
+  const [excelData, setExcelData] = useState<Record<string, any>[]>([]);
+  const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
+  const [columnModalOpen, setColumnModalOpen] = useState(false);
+  const [selectedColumn, setSelectedColumn] = useState<string>('');
   const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const { state, startMatch, clearResults } = useMatch();
 
@@ -70,9 +74,9 @@ export function InputArea({ onMatch }: InputAreaProps) {
     clearResults();
   };
 
-  // Excel 上传
+  // Excel 上传 - 先读取并让用户选择列
   const handleUpload: UploadProps['customRequest'] = async (options) => {
-    const { file, onSuccess, onError } = options;
+    const { file, onError } = options;
     const xlsx = await import('xlsx');
 
     try {
@@ -86,38 +90,60 @@ export function InputArea({ onMatch }: InputAreaProps) {
         return;
       }
 
-      // 获取第一行的列名
+      // 获取所有列名
       const headers = Object.keys(data[0] as object);
-
-      // 简单的列选择逻辑：查找包含"名称"或"商品"的列
-      const nameColumn = headers.find(
-        (h) => h.includes('名称') || h.includes('商品') || h.includes('name') || h.includes('product')
-      );
-
-      if (!nameColumn) {
-        message.warning('未找到商品名称列');
-        onError?.(new Error('未找到商品名称列'));
+      if (headers.length === 0) {
+        message.warning('未找到有效列');
+        onError?.(new Error('未找到有效列'));
         return;
       }
 
-      // 提取商品名称
-      const productNames = data.map((row: any) => String(row[nameColumn] || '')).filter(Boolean);
+      // 保存数据用于后续处理
+      setExcelData(data as Record<string, any>[]);
+      setExcelHeaders(headers);
 
-      // 更新输入框
-      setInputText(productNames.join('\n'));
+      // 自动选择最可能的商品名称列
+      const defaultColumn = headers.find(
+        (h) => h.includes('名称') || h.includes('商品') || h.includes('name') || h.includes('product')
+      ) || headers[0];
+      setSelectedColumn(defaultColumn);
 
-      // 自动开始匹配
-      clearResults();
-      startMatch(productNames);
-      onMatch?.();
-
-      message.success(`成功解析 ${productNames.length} 条数据`);
-      onSuccess?.(undefined);
+      // 打开列选择弹窗
+      setColumnModalOpen(true);
     } catch (error) {
       console.error('解析 Excel 失败:', error);
       message.error('解析 Excel 失败');
       onError?.(error as Error);
     }
+  };
+
+  // 确认选择列并提取数据
+  const handleColumnConfirm = () => {
+    if (!selectedColumn || excelData.length === 0) {
+      message.warning('请选择有效列');
+      return;
+    }
+
+    // 提取商品名称
+    const productNames = excelData
+      .map((row) => String(row[selectedColumn] || '').trim())
+      .filter(Boolean);
+
+    if (productNames.length === 0) {
+      message.warning('所选列无有效数据');
+      return;
+    }
+
+    // 更新输入框
+    setInputText(productNames.join('\n'));
+
+    // 自动开始匹配
+    clearResults();
+    startMatch(productNames);
+    onMatch?.();
+
+    message.success(`成功解析 ${productNames.length} 条数据`);
+    setColumnModalOpen(false);
   };
 
   // 计算行数
@@ -165,5 +191,34 @@ export function InputArea({ onMatch }: InputAreaProps) {
         </Text>
       </div>
     </Card>
+
+    {/* 列选择弹窗 */}
+    <Modal
+      title="选择商品名称列"
+      open={columnModalOpen}
+      onOk={handleColumnConfirm}
+      onCancel={() => setColumnModalOpen(false)}
+      okText="确认"
+      cancelText="取消"
+    >
+      <div className="py-4">
+        <p className="mb-4">请选择包含商品名称的列：</p>
+        <Select
+          style={{ width: '100%' }}
+          value={selectedColumn}
+          onChange={setSelectedColumn}
+          options={excelHeaders.map((header) => ({
+            label: header,
+            value: header,
+          }))}
+          placeholder="选择列"
+        />
+        {excelData.length > 0 && (
+          <p className="mt-4 text-gray-500 text-sm">
+            共 {excelData.length} 行数据
+          </p>
+        )}
+      </div>
+    </Modal>
   );
 }
