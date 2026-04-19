@@ -35,13 +35,50 @@ export default function () {
 function ClientPage() {
   // 注册页面标签页
   usePageTab('数据同步');
-  
+
   const { token } = useTokenContext();
   const [msg, setMsg] = useState('');
   const [currentStep, setCurrentStep] = useState('');
   const [progress, setProgress] = useState(0);
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [disabled, setDisabled] = useState(false);
+
+  // 将技术错误转为人类可读文字
+  const translateError = (error: any): string => {
+    if (!error) return '未知错误';
+
+    const message = error.message || String(error);
+
+    // 502/503/504 网关错误
+    if (message.includes('502') || message.includes('Bad Gateway')) {
+      return '服务器网关错误（502），目标服务暂时不可用，请稍后重试';
+    }
+    if (message.includes('503') || message.includes('Service Unavailable')) {
+      return '服务器服务不可用（503），可能正在维护，请稍后重试';
+    }
+    if (message.includes('504') || message.includes('Gateway Timeout')) {
+      return '服务器网关超时（504），目标服务响应超时，请稍后重试';
+    }
+
+    // 网络错误
+    if (message.includes('fetch') || message.includes('Network') || message.includes('网络')) {
+      return '网络连接失败，请检查网络后重试';
+    }
+    if (message.includes('timeout') || message.includes('超时')) {
+      return '请求超时，请检查网络连接后重试';
+    }
+
+    // 认证错误
+    if (message.includes('401') || message.includes('Unauthorized')) {
+      return '登录已过期，请刷新页面重新登录';
+    }
+    if (message.includes('403') || message.includes('Forbidden')) {
+      return '没有权限执行此操作，请联系管理员';
+    }
+
+    // 如果不是上述已知错误，返回原始消息（去掉技术细节）
+    return message;
+  };
 
   // 账套列表 - 硬编码的账套ID列表（与CLI一致）
   const clientKeys = [
@@ -167,7 +204,7 @@ function ClientPage() {
         const failCount = results.filter(r => !r.success).length;
         const failedDetails = results
           .filter(r => !r.success)
-          .map(r => ({ tenantID: r.tenantID, error: r.error?.message || String(r.error) }));
+          .map(r => ({ tenantID: r.tenantID, error: translateError(r.error) }));
 
         setFailedTenants(failedDetails);
 
@@ -182,7 +219,7 @@ function ClientPage() {
         clearTimeout(timeoutId);
       } catch (error) {
         clearTimeout(timeoutId);
-        setMsg(`同步失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        setMsg(`同步失败: ${translateError(error)}`);
         setCurrentStep('');
         setProgress(0);
         setCurrentStepIndex(-1);
