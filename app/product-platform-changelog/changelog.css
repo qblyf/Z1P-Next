@@ -1,0 +1,285 @@
+/* ===== Hero Section ===== */
+.changelog-hero {
+  background: linear-gradient(135deg, #1890ff 0%, #722ed1 100%);
+  border-radius: 0 0 24px 24px;
+  padding: 48px 40px 56px;
+  margin-bottom: 32px;
+  position: relative;
+  overflow: hidden;
+}
+
+.changelog-hero::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.1) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.changelog-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -30%;
+  left: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, transparent 70%);
+  border-radius: 50%;
+}
+
+.changelog-hero-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.changelog-hero-icon {
+  width: 72px;
+  height: 72px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  margin-bottom: 20px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+}
+
+.changelog-hero-title {
+  font-size: 32px;
+  font-weight: 800;
+  color: white;
+  margin: 0 0 8px;
+  letter-spacing: -0.5px;
+}
+
+.changelog-hero-subtitle {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0 0 28px;
+}
+
+.changelog-hero-stats {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 16px 32px;
+  backdrop-filter: blur(10px);
+}
+
+.changelog-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.changelog-stat-value {
+  font-size: 24px;
+  font-weight: 800;
+  color: white;
+  line-height: 1;
+}
+
+.changelog-stat-label {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.changelog-stat-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+/* ===== Loading & Empty ===== */
+.changelog-loading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  height: 300px;
+  color: #8c8c8c;
+  font-size: 14px;
+}
+
+.changelog-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 300px;
+}
+
+/* ===== Version Groups ===== */
+.changelog-list {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 0 24px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+}
+
+.version-group {
+  background: white;
+  border-radius: 16px;
+  border: 1px solid #f0f0f0;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s ease;
+}
+
+.version-group:hover {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+}
+
+/* ===== Version Header ===== */
+.version-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid #f5f5f5;
+  background: linear-gradient(to right, #fafbfc, #ffffff);
+}
+
+.version-badge-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.version-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 16px;
+  background: linear-gradient(135deg, #1890ff, #722ed1);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+}
+
+.version-type-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.version-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: #8c8c8c;
+}
+
+/* ===== Commit Timeline ===== */
+.commit-timeline {
+  padding: 8px 24px 24px;
+}
+
+.commit-item {
+  display: grid;
+  grid-template-columns: 32px 1fr;
+  grid-template-rows: auto auto;
+  column-gap: 16px;
+  position: relative;
+  padding-bottom: 4px;
+}
+
+/* 连接线 */
+.commit-connector {
+  position: absolute;
+  left: 15px;
+  top: 20px;
+  bottom: 0;
+  width: 2px;
+  background: linear-gradient(to bottom, #e6e6e6, transparent);
+}
+
+/* 节点 */
+.commit-node {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 14px;
+  position: relative;
+  z-index: 1;
+}
+
+.commit-type-dot {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px white, 0 2px 6px rgba(0, 0, 0, 0.15);
+  flex-shrink: 0;
+}
+
+/* 内容 */
+.commit-content {
+  grid-column: 2;
+  grid-row: 1;
+  padding: 10px 0 24px;
+}
+
+.commit-message {
+  font-size: 15px;
+  color: #262626;
+  line-height: 1.6;
+  margin-bottom: 8px;
+  padding-top: 10px;
+}
+
+.commit-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.commit-hash,
+.commit-author,
+.commit-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #8c8c8c;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.commit-hash:hover {
+  color: #1890ff;
+}
+
+.commit-author:hover,
+.commit-date:hover {
+  color: #595959;
+}
+
+/* ===== Pagination ===== */
+.changelog-pagination {
+  display: flex;
+  justify-content: center;
+  padding: 0 24px 48px;
+}
