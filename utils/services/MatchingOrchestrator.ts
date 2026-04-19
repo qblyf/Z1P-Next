@@ -633,7 +633,7 @@ export class MatchingOrchestrator {
 
     console.log(`\n[批量匹配] 开始处理 ${inputs.length} 条记录（并发数: ${concurrency}）...`);
 
-    const results: MatchResult[] = new Array(inputs.length);
+    const results: (MatchResult | null)[] = new Array(inputs.length);
     let matched = 0;
     let spuMatched = 0;
     let unmatched = 0;
