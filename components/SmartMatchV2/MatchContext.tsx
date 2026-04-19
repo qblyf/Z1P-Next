@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useReducer, useCallback, useRef, useEffect } from 'react';
+import React, { createContext, useContext, useReducer, useCallback, useRef, useEffect, useMemo } from 'react';
 import { message } from 'antd';
 import { MatchingOrchestrator } from '../../utils/services/MatchingOrchestrator';
 import { getBrandBaseList } from '@zsqk/z1-sdk/es/z1p/brand';
@@ -95,7 +95,6 @@ interface MatchContextValue {
   startMatch: (inputs: string[]) => void;
   cancelMatch: () => void;
   clearResults: () => void;
-  matchExcelData: (rows: { productName: string; gtin?: string }[]) => void;
 }
 
 // 创建 Context
@@ -257,25 +256,18 @@ export function MatchProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'SET_STATUS', payload: 'ready' });
   }, []);
 
-  // Excel 数据匹配
-  const matchExcelData = useCallback(
-    (rows: { productName: string; gtin?: string }[]) => {
-      const inputs = rows.map((r) => r.productName);
-      startMatch(inputs);
-    },
-    [startMatch]
+  const value = useMemo<MatchContextValue>(
+    () => ({
+      state,
+      orchestrator: orchestratorRef.current,
+      isInitialized: !!orchestratorRef.current,
+      initialize,
+      startMatch,
+      cancelMatch,
+      clearResults,
+    }),
+    [state, initialize, startMatch, cancelMatch, clearResults]
   );
-
-  const value: MatchContextValue = {
-    state,
-    orchestrator: orchestratorRef.current,
-    isInitialized: !!orchestratorRef.current,
-    initialize,
-    startMatch,
-    cancelMatch,
-    clearResults,
-    matchExcelData,
-  };
 
   return <MatchContext.Provider value={value}>{children}</MatchContext.Provider>;
 }

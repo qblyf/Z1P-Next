@@ -11,7 +11,7 @@ export function StatsCards() {
   const isLoading = status === 'initializing' || status === 'matching';
 
   return (
-    <Card className="mb-4">
+    <Card className="mb-4 relative">
       <Row gutter={16}>
         <Col span={6}>
           <Statistic

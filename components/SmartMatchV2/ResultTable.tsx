@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Table, Tag, Card, Space, Select, Typography } from 'antd';
 import { CheckCircleOutlined, CloseCircleOutlined, LoadingOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ColumnsType } from 'antd/es/table';
@@ -33,7 +33,7 @@ export function ResultTable() {
     }
   };
 
-  const columns: ColumnsType<MatchResult> = [
+  const columns = useMemo<ColumnsType<MatchResult>>(() => [
     {
       title: '序号',
       key: 'index',
@@ -112,7 +112,9 @@ export function ResultTable() {
       width: 100,
       render: (status: MatchResult['status']) => getStatusTag(status),
     },
-  ];
+  ], []);
+
+  return (
 
   return (
     <Card title="匹配结果">
