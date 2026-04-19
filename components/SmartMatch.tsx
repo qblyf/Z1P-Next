@@ -36,11 +36,9 @@ export default function SmartMatch() {
   const [pageSize, setPageSize] = useState(20);
   const [visibleColumns, setVisibleColumns] = useState<string[]>([
     'inputName',
-    'matchedSKU',
+    'matchedResult',
     'matchedBrand',
-    'specs',
     'matchedGtins',
-    'similarity',
     'status',
   ]);
   const [orchestrator] = useState(() => new MatchingOrchestrator());
