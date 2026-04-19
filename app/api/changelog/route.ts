@@ -78,7 +78,7 @@ function getGitLog(limit: number = 100): CommitInfo[] {
       return [];
     }
 
-    console.log('Git log fetched from:', workDir);
+    console.log('Git log fetched from:', workDir, 'lines:', logOutput.split('\n').length);
 
     const lines = logOutput.trim().split('\n');
     return lines.map(line => {
