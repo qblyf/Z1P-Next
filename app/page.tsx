@@ -182,7 +182,7 @@ function ClientPage() {
       <main className="max-w-7xl mx-auto px-6 py-8">
         {/* 欢迎区域 */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">欢迎使用 Z1 数据管理平台</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">欢迎使用 Z1 商品平台</h1>
           <p className="text-gray-600">企业级数据管理和分析解决方案</p>
         </div>
 

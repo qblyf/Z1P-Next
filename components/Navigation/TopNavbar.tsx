@@ -30,7 +30,7 @@ export const TopNavbar = memo(function TopNavbar() {
           </div>
           <div className="hidden sm:block">
             <div className="text-lg font-semibold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
-              Z1 数据管理平台
+              Z1 商品平台
             </div>
           </div>
         </Link>

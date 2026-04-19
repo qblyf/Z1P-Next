@@ -17,7 +17,7 @@ export default function SmartMatchV2Page() {
   return (
     <>
       <Head>
-        <title>在线匹配 V2 - Z1 数据管理平台</title>
+        <title>在线匹配 V2 - Z1 商品平台</title>
       </Head>
       <SmartMatchV2 />
     </>
