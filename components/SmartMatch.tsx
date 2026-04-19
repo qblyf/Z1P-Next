@@ -315,6 +315,7 @@ export default function SmartMatch() {
     setCurrentPage(1);
 
     const lines = inputText.split('\n').filter(line => line.trim());
+    console.log('[DEBUG] handleMatch called, lines:', lines.length);
 
     // 初始化进度
     matchProgressRef.current = {
@@ -325,6 +326,7 @@ export default function SmartMatch() {
       results: null
     };
     setMatchProgress({ ...matchProgressRef.current });
+    console.log('[DEBUG] setMatchProgress called');
 
     // 使用 requestAnimationFrame 来批量更新 state
     let scheduledUpdate = false;
@@ -342,6 +344,7 @@ export default function SmartMatch() {
 
     // 让 React 先渲染遮罩层，再开始匹配
     await Promise.resolve();
+    console.log('[DEBUG] after Promise.resolve, starting batchMatch');
 
     try {
       // 使用 MatchingOrchestrator 进行批量匹配
@@ -467,6 +470,9 @@ export default function SmartMatch() {
       </div>
     );
   }
+
+  // DEBUG: 检查遮罩层状态
+  console.log('[DEBUG] render: loading=', loading, 'matchProgress=', !!matchProgress);
 
   return (
     <>
