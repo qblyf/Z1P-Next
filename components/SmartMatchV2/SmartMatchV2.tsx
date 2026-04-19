@@ -30,11 +30,19 @@ function SmartMatchContent() {
   }
 
   return (
-    <div className="space-y-4">
-      <StatsCards />
-      <InputArea />
-      {state.results.length > 0 && <ResultTable />}
-    </div>
+    <>
+      {/* 全局蒙版 - 匹配中时阻止用户操作 */}
+      {state.status === 'matching' && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
+          <Spin indicator={<LoadingOutlined style={{ fontSize: 48 }} spin />} tip="匹配中，请稍候..." />
+        </div>
+      )}
+      <div className="space-y-4">
+        <StatsCards />
+        <InputArea />
+        {state.results.length > 0 && <ResultTable />}
+      </div>
+    </>
   );
 }
 
