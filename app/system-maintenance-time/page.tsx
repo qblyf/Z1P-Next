@@ -68,6 +68,7 @@ function SystemMaintenanceTime(): JSX.Element {
     const res = await getSysSettings({
       auth: token,
       endpoint: Z1P_ENDPOINT
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any);
     const data = res.map((v, i) => {
       return {

@@ -301,7 +301,7 @@ export function TableMatchComponent() {
       dataIndex: `col_${index}`,
       key: `col_${index}`,
       width: 120,
-      render: (_: any, record: any) => record.originalRow[index] || '-',
+      render: (_: unknown, record: { originalRow: string[] }) => record.originalRow[index] || '-',
     })) || []),
     // 匹配结果列
     {

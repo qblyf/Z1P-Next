@@ -44,6 +44,7 @@ function ClientPage() {
   const [disabled, setDisabled] = useState(false);
 
   // 将技术错误转为人类可读文字
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const translateError = (error: any): string => {
     if (!error) return '未知错误';
 
@@ -134,7 +135,9 @@ function ClientPage() {
   const { addSyncLogWithData } = require('@zsqk/z1-sdk/es/z1p/sync-log');
 
   // 遍历账套进行同步
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const syncAllTenants = async (syncDataID: number, data: any, selectedTenantIDs: string[]) => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const results: any[] = [];
     for (const tenantID of selectedTenantIDs) {
       try {

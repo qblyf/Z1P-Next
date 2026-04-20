@@ -33,12 +33,15 @@ import { lessAwait } from '../../error';
 import { useTokenContext } from '../../datahooks/auth';
 
 function updateSPUCateList(
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   spuCateList: any[],
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   changes: Array<{ id: any } & any>
 ) {
   if (changes.length === 0) {
     return spuCateList;
   }
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const obj: any = {};
   for (const { id, ...rest } of changes) {
     const i = spuCateList.findIndex(v => v.id === id);

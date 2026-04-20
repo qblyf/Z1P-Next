@@ -110,6 +110,7 @@ export default function GTINQueryPage() {
               result.state = exactMatch.state;
               result.gtins = exactMatch.gtins;
               if ('spuID' in exactMatch) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 result.spuId = (exactMatch as any).spuID;
               }
               if ('spu' in exactMatch && exactMatch.spu) {

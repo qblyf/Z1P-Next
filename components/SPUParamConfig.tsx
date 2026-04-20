@@ -61,7 +61,7 @@ export default function SPUParamConfig({ spuID, skuID }: SPUParamConfigProps) {
   const [editingCustomValue, setEditingCustomValue] = useState<string | null>(null);
   const [pValueList, setPValueList] = useState<Value[]>([]);
   const [pValueListEditing, setPValueListEditing] = useState<Value[] | NewValue[]>([]);
-  const [skuList, setSkuList] = useState<any[]>([]);
+  const [skuList, setSkuList] = useState<{ id: number; spuID: number }[]>([]);
   const [skuParamValuesMap, setSkuParamValuesMap] = useState<Record<number, Value[]>>({});
 
   const { token } = useTokenContext();
@@ -118,7 +118,7 @@ export default function SPUParamConfig({ spuID, skuID }: SPUParamConfigProps) {
           { limit: 1000, offset: 0, orderBy: [{ key: GetSKUListOrderByKey.skuID, sort: OrderBySort.降序 }] },
           { sku: ['id', 'name', 'gtins', 'state'], spu: ['brand'] }
         );
-        const filteredRes = res.filter((item: any) => item.spuID === spuID);
+        const filteredRes = res.filter((item) => item.spuID === spuID);
         setSkuList(filteredRes);
 
         const paramValuesMap: Record<number, Value[]> = {};
@@ -193,11 +193,13 @@ export default function SPUParamConfig({ spuID, skuID }: SPUParamConfigProps) {
       
       if (existingIndex >= 0) {
         // 更新已有的值
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const updated = [...prev] as any[];
         updated[existingIndex] = { ...updated[existingIndex], value: value || '' };
         return updated;
       } else {
         // 新增值 - 使用paramDefinition字段
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const newValue: any = {
           spu: spuID,
           paramDefinition: definitionID,
@@ -207,6 +209,7 @@ export default function SPUParamConfig({ spuID, skuID }: SPUParamConfigProps) {
         if (skuID) {
           newValue.sku = skuID;
         }
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return [...prev, newValue] as any;
       }
     });
@@ -285,7 +288,10 @@ export default function SPUParamConfig({ spuID, skuID }: SPUParamConfigProps) {
                     // 获取当前参数的编辑值
                     const currentValue = pValueListEditing.find(pv => {
                       if ('definitionID' in pv) return pv.definitionID === def.definitionID;
-                      if ('paramDefinition' in pv) return (pv as any).paramDefinition === def.definitionID;
+                      if ('paramDefinition' in pv) {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        return (pv as any).paramDefinition === def.definitionID;
+                      }
                       return false;
                     })?.value;
                     return (

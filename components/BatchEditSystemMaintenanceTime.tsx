@@ -157,10 +157,8 @@ export function BatchEditSystemMaintenanceTime(props: {
                   clientName: s.clientName,
                 };
               }),
-              {
-                auth: token,
-                endpoint: Z1P_ENDPOINT
-              } as any
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              { auth: token, endpoint: Z1P_ENDPOINT } as any
             );
             onOk('ok');
           })}

@@ -74,7 +74,7 @@ function HomeContent(): JSX.Element {
         const res = await getUpdateLogList({});
         if (res.length > 0) {
           setRecentUpdates(
-            res.slice(0, 5).map((item: any) => ({
+            res.slice(0, 5).map((item) => ({
               version: item.version || 'v?.?',
               date: Number(item.date || 0),
               content: item.content || '',

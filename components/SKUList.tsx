@@ -26,6 +26,7 @@ export default function SKUList(props: {
   const { token } = useTokenContext();
   const { brandList } = useBrandListContext();
 
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [skuList, setSkuList] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
@@ -81,6 +82,7 @@ export default function SKUList(props: {
         }
 
         // 构建查询参数
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const queryParams: any = {
           limit: limit,
           offset: 0,
@@ -109,6 +111,7 @@ export default function SKUList(props: {
         }
         
         // 转换数据格式
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const formattedSkus = skus.map((sku: any) => ({
           skuID: sku.id,
           name: sku.name,

@@ -69,6 +69,7 @@ export function ClientLayout({ children }: { children: React.ReactNode }) {
           strategy="afterInteractive"
           src="https://g.alicdn.com/woodpeckerx/jssdk??wpkReporter.js"
           onLoad={() => {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const win = window as any;
             if (!win.__wpk) {
               win.__wpk = new win.wpkReporter({ bid: WPK_BID });

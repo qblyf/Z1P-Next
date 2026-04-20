@@ -16,6 +16,7 @@ interface InputAreaProps {
 export function InputArea({ onMatch }: InputAreaProps) {
   const [inputText, setInputText] = useState('');
   const [isReady, setIsReady] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [excelData, setExcelData] = useState<Record<string, any>[]>([]);
   const [excelHeaders, setExcelHeaders] = useState<string[]>([]);
   const [columnModalOpen, setColumnModalOpen] = useState(false);
@@ -85,6 +86,7 @@ export function InputArea({ onMatch }: InputAreaProps) {
       }
 
       // 保存数据用于后续处理
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       setExcelData(data as Record<string, any>[]);
       setExcelHeaders(headers);
 

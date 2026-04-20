@@ -61,6 +61,7 @@ const { Option } = Select;
  * 从 SKU 列表中提取实际使用的颜色、配置、版本
  * 仅保留已被使用的值
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function extractUsedValues(skuIDs: any[]) {
   const colors = new Set<string>();
   const specs = new Set<string>();
@@ -325,6 +326,7 @@ export default function SKUManager(props: {
                 <Form.Item label="版本" tooltip="可能有的多种版本" style={{ marginBottom: '12px' }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                 {combos.map(v => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const count = spu.skuIDs.filter(sku => (sku as any).combo === v.name).length;
                   const isUsed = count > 0;
                   return (
@@ -457,6 +459,7 @@ export default function SKUManager(props: {
             <Form.Item label="配置" tooltip="可能有的多种配置" style={{ marginBottom: '12px' }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                 {specs.map(v => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const count = spu.skuIDs.filter(sku => (sku as any).spec === v.name).length;
                   const isUsed = count > 0;
                   return (
@@ -589,6 +592,7 @@ export default function SKUManager(props: {
             <Form.Item label="颜色" tooltip="可能有的多种颜色" style={{ marginBottom: '12px' }}>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'center' }}>
                 {colors.map(v => {
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
                   const count = spu.skuIDs.filter(sku => (sku as any).color === v.name).length;
                   const isUsed = count > 0;
                   return (
@@ -935,6 +939,7 @@ function EditRelationshipSPUwithSKUs(props: {
           ...(canSetCombo || selectedCombos.length > 0 ? [{
             title: '版本',
             dataIndex: 'combo',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             render: (combo: any, item: any) => {
               return (
                 <Select
@@ -966,6 +971,7 @@ function EditRelationshipSPUwithSKUs(props: {
           ...(canSetSpec || selectedSpecs.length > 0 ? [{
             title: '配置',
             dataIndex: 'spec',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             render: (spec: any, item: any) => {
               return (
                 <Select
@@ -997,6 +1003,7 @@ function EditRelationshipSPUwithSKUs(props: {
           ...(canSetColor || selectedColors.length > 0 ? [{
             title: '颜色',
             dataIndex: 'color',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             render: (color: any, item: any) => {
               return (
                 <Select
@@ -1028,6 +1035,7 @@ function EditRelationshipSPUwithSKUs(props: {
           {
             title: '69码',
             dataIndex: 'skuID',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             render: (skuID: any, item: any) => {
               if (item.skuID === -1) {
                 return <>-</>;
@@ -1044,6 +1052,7 @@ function EditRelationshipSPUwithSKUs(props: {
           },
           {
             title: '操作',
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             render: (_: any, item: any) => {
               if (item.skuID === -1) {
                 return (

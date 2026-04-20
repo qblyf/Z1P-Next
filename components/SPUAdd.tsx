@@ -349,6 +349,7 @@ export default function SPUAdd() {
                 generation: input.generation,
                 order: Number(order),
               };
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
               setSpuList(update(spuList, { $push: [newSpu as any] }) as any);
             })}
           >

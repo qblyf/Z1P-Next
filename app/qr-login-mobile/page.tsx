@@ -276,6 +276,7 @@ function QrLoginMobilePage() {
 
                     // 自动重试机制：最多重试 3 次
                     const maxRetries = 3;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     let lastError: any = null;
 
                     for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -286,8 +287,9 @@ function QrLoginMobilePage() {
                         setStatus('登录已完成');
                         setShowDingtalkWarning(false);
                         return; // 成功后直接返回
-                      } catch (err: any) {
-                        lastError = err;
+                      } catch (err) {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        lastError = err as any;
                         console.error(`Login attempt ${attempt} failed:`, err);
                         
                         // 如果是 session 错误且还有重试次数，等待后重试

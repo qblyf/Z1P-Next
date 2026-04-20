@@ -209,7 +209,7 @@ export default function TenantManagePage() {
       title: '操作',
       key: 'actions',
       width: 200,
-      render: (_: any, record: TenantConfig) => (
+      render: (_: unknown, record: TenantConfig) => (
         <Space>
           <Button 
             type="text" 

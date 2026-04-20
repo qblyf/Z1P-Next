@@ -109,6 +109,7 @@ function BatchEditModal(props: {
             let failCount = 0;
 
             // 准备更新参数
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const updateParams: any = {};
             if (values.brand) updateParams.brand = values.brand;
             if (values.cateID) updateParams.cateID = values.cateID[values.cateID.length - 1];

@@ -431,9 +431,8 @@ export default function SPUEdit(props: { defaultTab?: string }) {
                           order: newData.order,
                         };
                         setSpuList(
-                          update(spuList, {
-                            [i]: { $set: updatedSpu as any },
-                          }) as any
+                          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                          update(spuList, { [i]: { $set: updatedSpu as any } }) as any
                         );
                       })}
                     >
@@ -586,9 +585,8 @@ export default function SPUEdit(props: { defaultTab?: string }) {
                         order: newData.order,
                       };
                       setSpuList(
-                        update(spuList, {
-                          [i]: { $set: updatedSpu as any },
-                        }) as any
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                        update(spuList, { [i]: { $set: updatedSpu as any } }) as any
                       );
                     })}
                   >
@@ -628,7 +626,7 @@ export default function SPUEdit(props: { defaultTab?: string }) {
                     // 如果获取失败，尝试从 preData 中获取
                     if (preData?.skuIDs) {
                       const sku = preData.skuIDs.find(
-                        (s: any) => s.skuID === skuID
+                        (s) => s.skuID === skuID
                       );
                       if (sku && 'name' in sku) {
                         console.log('从 preData 获取 SKU 名称:', sku.name);

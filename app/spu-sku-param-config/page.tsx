@@ -79,6 +79,7 @@ function Page() {
   const [pValueListEditing, setPValueListEditing] = useState<
     Value[] | NewValue[]
   >([]);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [skuList, setSkuList] = useState<any[]>([]);
   const [skuParamValuesMap, setSkuParamValuesMap] = useState<
     Record<number, Value[]>
@@ -159,6 +160,7 @@ function Page() {
           }
         );
         // 过滤出属于当前SPU的SKU
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const filteredRes = res.filter((item: any) => item.spuID === spuID);
         setSkuList(filteredRes);
 

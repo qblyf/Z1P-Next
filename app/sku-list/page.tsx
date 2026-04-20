@@ -254,6 +254,7 @@ export default function () {
  * @author Lian Zheren <lzr@go0356.com>
  */
 function ClientPage() {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [list, setList] = useState<any[]>();
   const [loading, setLoading] = useState(false);
 
@@ -295,6 +296,7 @@ function ClientPage() {
                 const { skuId, brands, gtinKeyword, nameKeyword, skuState, specKeyword, colorKeyword, comboKeyword } = v;
 
                 // 构建查询参数，确保所有参数都是有效的
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const queryParams: any = {
                   limit: 1000,
                   offset: 0,
@@ -318,6 +320,7 @@ function ClientPage() {
                 console.log('=============================');
 
                 // 从服务器获取数据 - 只请求 API 支持的字段
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 let res: any[];
                 if (skuId) {
                   // 精确查找单个 SKU，使用 getSKUInfo
@@ -346,23 +349,26 @@ function ClientPage() {
                 
                 if (specKeyword) {
                   const specLower = specKeyword.toLowerCase();
-                  filteredRes = filteredRes.filter((item: any) => 
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  filteredRes = filteredRes.filter((item: any) =>
                     item.name && item.name.toLowerCase().includes(specLower)
                   );
                   console.log('按配置/内存筛选后数量:', filteredRes.length);
                 }
-                
+
                 if (colorKeyword) {
                   const colorLower = colorKeyword.toLowerCase();
-                  filteredRes = filteredRes.filter((item: any) => 
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  filteredRes = filteredRes.filter((item: any) =>
                     item.name && item.name.toLowerCase().includes(colorLower)
                   );
                   console.log('按颜色筛选后数量:', filteredRes.length);
                 }
-                
+
                 if (comboKeyword) {
                   const comboLower = comboKeyword.toLowerCase();
-                  filteredRes = filteredRes.filter((item: any) => 
+                  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                  filteredRes = filteredRes.filter((item: any) =>
                     item.name && item.name.toLowerCase().includes(comboLower)
                   );
                   console.log('按版本筛选后数量:', filteredRes.length);

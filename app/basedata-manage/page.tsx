@@ -96,6 +96,7 @@ function DraggableBrandCard({ brand, index, moveCard, onEdit }: DraggableBrandCa
   const [{ handlerId }, drop] = useDrop<
     { index: number },
     void,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     { handlerId: any }
   >({
     accept: ItemTypes.BRAND_CARD,
@@ -271,8 +272,8 @@ function BrandManage() {
     if (!localBrands) return { total: 0, visible: 0, hidden: 0 };
     return {
       total: localBrands.length,
-      visible: localBrands.filter(b => (b as any).display !== false).length,
-      hidden: localBrands.filter(b => (b as any).display === false).length,
+      visible: localBrands.filter(b => (b as { display?: boolean }).display !== false).length,
+      hidden: localBrands.filter(b => (b as { display?: boolean }).display === false).length,
     };
   }, [localBrands]);
 
@@ -1718,6 +1719,7 @@ function SpecEdit(props: { zid: string; title: string; onSuccess?: () => void; s
   const [loading, setLoading] = useState(false);
   const [labelInput, setLabelInput] = useState('');
   const [activeTab, setActiveTab] = useState('basic');
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [spuList, setSpuList] = useState<any[]>([]);
   const [spuLoading, setSpuLoading] = useState(false);
 
@@ -1759,7 +1761,7 @@ function SpecEdit(props: { zid: string; title: string; onSuccess?: () => void; s
       const filteredSpus = allSpus.filter((spu) => {
         if (!spu.skuIDs || !Array.isArray(spu.skuIDs)) return false;
         
-        return spu.skuIDs.some((sku: any) => {
+        return spu.skuIDs.some((sku) => {
           let specValue: string | undefined;
           
           // 根据规格类型获取对应的字段
