@@ -35,10 +35,14 @@ export function InputArea({ onMatch }: InputAreaProps) {
 
   // 防抖自动匹配（Excel 导入后不触发）
   useEffect(() => {
-    if (!inputText.trim() || !isReady || excelJustImported) {
-      if (excelJustImported) {
-        setExcelJustImported(false);
-      }
+    // Excel 导入后，不触发自动匹配
+    // 需要通过 ref 来追踪，因为 useEffect 执行时 state 可能还未更新
+    if (excelJustImported) {
+      setExcelJustImported(false);
+      return;
+    }
+
+    if (!inputText.trim() || !isReady) {
       return;
     }
 
