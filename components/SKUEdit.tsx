@@ -7,7 +7,7 @@ import {
 } from '@zsqk/z1-sdk/es/z1p/product';
 import { Button, Col, Form, Input, Row, Space, Tabs } from 'antd';
 import { useEffect, useState } from 'react';
-import _ from 'lodash';
+import { last } from 'lodash';
 import update from 'immutability-helper';
 import pinyin from 'tiny-pinyin';
 import { UploadFile } from 'antd/lib/upload/interface';
@@ -55,7 +55,7 @@ export function SKUEdit(props: {
     }
     setImage({
       uid: String(Math.random()).slice(2),
-      name: _.last(preData.thumbnail.split('/')) || '',
+      name: last(preData.thumbnail.split('/')) || '',
       status: 'done',
       url: preData.thumbnail,
     });

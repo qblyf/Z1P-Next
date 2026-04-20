@@ -231,11 +231,11 @@ export function getAwait<
     showSuccess?: boolean;
   } = {}
 ) {
+  const loadingKey = 'get-await-loading';
   return async (...rest: Parameters<T>): Promise<void> => {
     /** 是否已超时 */
     let stop = false;
-    const key = Math.random().toString();
-    notification.info({ message: '正在处理请求, 请稍等.', key });
+    notification.info({ message: '正在处理请求, 请稍等.', key: loadingKey });
 
     try {
       const data = await Promise.race([
@@ -247,7 +247,7 @@ export function getAwait<
           }, timeoutThreshold);
         }),
       ]);
-      notification.destroy(key);
+      notification.destroy(loadingKey);
       if (showSuccess) {
         notification.success({ message: '请求处理成功.' });
       }
@@ -255,7 +255,7 @@ export function getAwait<
         finallyCallback(undefined, data);
       }
     } catch (err) {
-      notification.destroy(key);
+      notification.destroy(loadingKey);
       let errorMsg = '';
       if (stop) {
         errorMsg = '请求处理超时, 可以重试.';
@@ -301,11 +301,11 @@ export function lessAwait<
     showSuccess?: boolean;
   } = {}
 ) {
-  const key = Math.random().toString();
+  const loadingKey = 'less-await-loading';
   return async (...rest: Parameters<T>): Promise<void> => {
     /** 是否已超时 */
     let stop = false;
-    notification.info({ message: '正在处理请求, 请稍等.', key });
+    notification.info({ message: '正在处理请求, 请稍等.', key: loadingKey });
 
     try {
       const data = await Promise.race([
@@ -317,9 +317,9 @@ export function lessAwait<
           }, timeoutThreshold);
         }),
       ]);
-      notification.destroy(key); // 先销毁loading消息
+      notification.destroy(loadingKey); // 先销毁loading消息
       if (showSuccess) {
-        showMergedSuccessMessage('请求处理成功.', key);
+        showMergedSuccessMessage('请求处理成功.', loadingKey);
       }
       if (typeof finallyCallback === 'function') {
         finallyCallback(undefined, data);
@@ -345,14 +345,14 @@ export function lessAwait<
             {'  '}
             <a
               onClick={() => {
-                notification.destroy(key);
+                notification.destroy(loadingKey);
               }}
             >
               关闭
             </a>
           </>
         ),
-        key,
+        key: loadingKey,
       });
       if (typeof finallyCallback === 'function') {
         finallyCallback(new Error(errorMsg));

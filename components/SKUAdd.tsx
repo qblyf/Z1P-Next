@@ -3,7 +3,6 @@ import { Button, Form, Input, Row, Select, Switch } from 'antd';
 import { useEffect, useState } from 'react';
 import pinyin from 'tiny-pinyin';
 import update from 'immutability-helper';
-import _ from 'lodash';
 import { UploadFile } from 'antd/lib/upload/interface';
 
 import { getAllPids, validateGTIN } from './SKUManager';

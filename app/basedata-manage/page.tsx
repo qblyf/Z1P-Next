@@ -637,7 +637,7 @@ function BrandEdit(props: { name: string; onSuccess?: () => void }) {
       setPreData(info);
     };
     setInput({});
-    lessAwait(fn)();
+    lessAwait(fn, { showSuccess: false })();
   }, [name]);
 
   const { token } = useTokenContext();
@@ -1734,7 +1734,7 @@ function SpecEdit(props: { zid: string; title: string; onSuccess?: () => void; s
       }
     };
     setInput({});
-    lessAwait(fn)();
+    lessAwait(fn, { showSuccess: false })();
   }, [zid, token]);
 
   // 加载使用该规格的SPU列表

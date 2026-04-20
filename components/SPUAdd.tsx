@@ -4,7 +4,7 @@ import { Button, DatePicker, Form, Input, Select } from 'antd';
 import { useState, useMemo, useEffect } from 'react';
 import update from 'immutability-helper';
 import pinyin from 'tiny-pinyin';
-import _ from 'lodash';
+import { debounce, last } from 'lodash';
 import { UploadFile } from 'antd/lib/upload/interface';
 import dayjs from 'dayjs';
 
@@ -108,12 +108,12 @@ export default function SPUAdd() {
     return <>请在商品分类中选择到要新增SPU的最末级分类</>;
   }
 
-  const isLast = spuCateList.every(v => v.pid !== spuCateID);
+  const isLast = spuCateList.every((v: { pid: number }) => v.pid !== spuCateID);
   if (!isLast) {
     return <>请在商品分类中选择到要新增SPU的最末级分类</>;
   }
 
-  const spuCate = spuCateList.find(v => v.id === spuCateID);
+  const spuCate = spuCateList.find((v: { id: number }) => v.id === spuCateID);
   if (!spuCate) {
     return <>没有找到 spuCate</>;
   }

@@ -13,7 +13,7 @@ import OSS from 'ali-oss';
 import { Upload, Button, Tooltip } from 'antd';
 import { RcFile, UploadProps } from 'antd/lib/upload';
 import { UploadFile, UploadFileStatus } from 'antd/lib/upload/interface';
-import * as _ from 'lodash';
+import { debounce, last } from 'lodash';
 import { DndProvider, DropTargetMonitor, useDrag, useDrop } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { notification } from 'antd';
@@ -227,7 +227,7 @@ function FileUpload(props: Props): JSX.Element {
   );
 
   const batchUploadDebounced = useMemo(() => {
-    return _.debounce(batchUpload, 500);
+    return debounce(batchUpload, 500);
   }, [batchUpload]);
 
   return (

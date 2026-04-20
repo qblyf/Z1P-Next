@@ -25,7 +25,7 @@ import { useCallback, useEffect, useState } from 'react';
 import TextArea from 'antd/lib/input/TextArea';
 import update from 'immutability-helper';
 import pinyin from 'tiny-pinyin';
-import _ from 'lodash';
+import { last } from 'lodash';
 import { UploadFile } from 'antd/lib/upload/interface';
 import dayjs from 'dayjs';
 
@@ -95,7 +95,7 @@ export default function SPUEdit(props: { defaultTab?: string }) {
         thumbnail: spu.images.thumbnail
           ? {
               uid: String(Math.random()).slice(10),
-              name: _.last(spu.images.thumbnail.split('/')) || '',
+              name: last(spu.images.thumbnail.split('/')) || '',
               status: 'done',
               url: spu.images.thumbnail,
             }
@@ -103,7 +103,7 @@ export default function SPUEdit(props: { defaultTab?: string }) {
         mainImages: (spu.images.mainImages || []).map(img => {
           return {
             uid: String(Math.random()).slice(10),
-            name: _.last(img.split('/')) || '',
+            name: last(img.split('/')) || '',
             status: 'done',
             url: img,
           };
@@ -111,7 +111,7 @@ export default function SPUEdit(props: { defaultTab?: string }) {
         detailsImages: (spu.images.detailsImages || []).map(img => {
           return {
             uid: String(Math.random()).slice(10),
-            name: _.last(img.split('/')) || '',
+            name: last(img.split('/')) || '',
             status: 'done',
             url: img,
           };

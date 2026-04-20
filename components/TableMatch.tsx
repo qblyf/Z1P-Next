@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, Button, Table, Tag, Select, Empty, Progress } from 'antd';
 import { Upload, Play, Download } from 'lucide-react';
 import { getBrandBaseList } from '@zsqk/z1-sdk/es/z1p/brand';
-import * as XLSX from 'xlsx';
+import { read, utils, writeFile } from 'xlsx';
 import { MatchingOrchestrator } from '../utils/services/MatchingOrchestrator';
 import type { BrandData } from '../utils/types';
 import { notification } from 'antd';
@@ -99,14 +99,14 @@ export function TableMatchComponent() {
       reader.onload = (e) => {
         try {
           const data = e.target?.result;
-          const workbook = XLSX.read(data, { type: 'binary' });
+          const workbook = read(data, { type: 'binary' });
           
           // 读取第一个工作表
           const firstSheetName = workbook.SheetNames[0];
           const worksheet = workbook.Sheets[firstSheetName];
           
           // 转换为 JSON 数组
-          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
+          const jsonData = utils.sheet_to_json(worksheet, { header: 1 }) as string[][];
           
           if (jsonData.length === 0) {
             notification.error({ message: '文件为空' });
