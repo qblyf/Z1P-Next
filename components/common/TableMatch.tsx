@@ -5,8 +5,8 @@ import { Card, Button, Table, Tag, Select, Empty, Progress } from 'antd';
 import { Upload, Play, Download } from 'lucide-react';
 import { getBrandBaseList } from '@zsqk/z1-sdk/es/z1p/brand';
 import { read, utils, writeFile } from 'xlsx';
-import { MatchingOrchestrator } from '../utils/services/MatchingOrchestrator';
-import type { BrandData } from '../utils/types';
+import { MatchingOrchestrator } from '../../utils/services/MatchingOrchestrator';
+import type { BrandData } from '../../utils/types';
 import { notification } from 'antd';
 
 /**
