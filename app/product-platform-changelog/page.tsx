@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Tag, Card, Spin, Empty, Pagination, Tooltip } from 'antd';
+import { Spin, Empty, Pagination, Tooltip } from 'antd';
 import { GitCommit, User, Calendar, Rocket, BookOpen } from 'lucide-react';
 import PageWrap from '../../components/PageWrap';
 import './changelog.css';

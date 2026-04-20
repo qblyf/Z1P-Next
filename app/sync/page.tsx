@@ -128,7 +128,9 @@ function ClientPage() {
   };
 
   // SDK 同步函数
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { pullAllData, addSyncData, syncProductSingle } = require('@zsqk/z1-sdk/es/z1p/sync-data');
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
   const { addSyncLogWithData } = require('@zsqk/z1-sdk/es/z1p/sync-log');
 
   // 遍历账套进行同步

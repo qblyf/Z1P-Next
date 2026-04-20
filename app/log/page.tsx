@@ -19,10 +19,6 @@ import { Suspense, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTokenContext } from '../../datahooks/auth';
 import './log.css';
 
-function formatDate(v: number) {
-  return dayjs(v * 1000).format('YYYY-MM-DD');
-}
-
 function formatDateVerbose(v: number) {
   return dayjs(v * 1000).format('MM月DD日');
 }

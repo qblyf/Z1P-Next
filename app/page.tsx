@@ -10,7 +10,6 @@ import {
   Download,
   FileText,
   Clock,
-  LogOut,
   ArrowUpRight,
   Search,
   Barcode,

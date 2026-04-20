@@ -13,19 +13,17 @@ import {
   Typography,
   Divider,
   notification,
-  Spin,
   Row,
   Col,
 } from 'antd';
 import { PageSkeleton } from '../../components/Skeleton';
 import { SearchOutlined, ClearOutlined, CopyOutlined, DownloadOutlined } from '@ant-design/icons';
 import { getSKUListJoinSPU } from '@zsqk/z1-sdk/es/z1p/product';
-import { SKU } from '@zsqk/z1-sdk/es/z1p/alltypes';
-import { read, utils, writeFile } from 'xlsx';
+import { utils, writeFile } from 'xlsx';
 import PageWrap from '../../components/PageWrap';
 import { getAwait } from '../../error';
 
-const { Title, Text } = Typography;
+const { Text } = Typography;
 const { TextArea } = Input;
 
 interface GTINQueryResult {

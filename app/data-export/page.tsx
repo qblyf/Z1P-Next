@@ -1,6 +1,6 @@
 'use client';
 
-import { Button, Tabs, TabsProps, Card, Progress, Space, Spin, Statistic, Row, Col, Tag } from 'antd';
+import { Button, Tabs, TabsProps, Card, Progress, Tag } from 'antd';
 import { Suspense, useMemo, useState } from 'react';
 import { SKU, SKUState } from '@zsqk/z1-sdk/es/z1p/alltypes';
 import { getSKUList } from '@zsqk/z1-sdk/es/z1p/product';
@@ -148,7 +148,7 @@ function SKUDataExport() {
       const allData: Pick<SKU, 'name' | 'gtins' | 'id'>[] = [];
 
       // 先取总数
-      const firstBatch = await getSKUList(
+      await getSKUList(
         {
           states: [SKUState.在用],
           limit: 1,

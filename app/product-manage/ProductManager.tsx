@@ -4,11 +4,9 @@ import { notification } from 'antd';
 import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
 import { orderSPUCate, getSPUInfo, getSKUsInfo as getSKUsInfoAPI } from '@zsqk/z1-sdk/es/z1p/product';
-import { getSKUsInfo } from '../../data/product';
 import update from 'immutability-helper';
 
 import { HelpTooltip } from '../../components/HelpTooltip';
-import SKUManager from '../../components/SKUManager';
 import SKUList from '../../components/SKUList';
 import { SKUEdit } from '../../components/SKUEdit';
 import SPUAdd from '../../components/SPUAdd';

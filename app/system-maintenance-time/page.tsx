@@ -65,11 +65,10 @@ function SystemMaintenanceTime(): JSX.Element {
     if (!token) {
       return;
     }
-    const res = await getSysSettings({ 
+    const res = await getSysSettings({
       auth: token,
-      // @ts-ignore - SDK 类型定义可能不完整，但运行时需要 endpoint
-      endpoint: Z1P_ENDPOINT 
-    });
+      endpoint: Z1P_ENDPOINT
+    } as any);
     const data = res.map((v, i) => {
       return {
         key: i + 1,

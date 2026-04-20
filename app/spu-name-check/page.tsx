@@ -33,7 +33,7 @@ interface SPUWithIssues extends Pick<SPU, 'state' | 'name' | 'id' | 'brand' | 'c
 /**
  * 检查SPU命名是否符合规范
  */
-function checkSPUNaming(spu: Pick<SPU, 'name' | 'brand'>, brandList: string[]): NamingIssue[] {
+function checkSPUNaming(spu: Pick<SPU, 'name' | 'brand'>, _brandList: string[]): NamingIssue[] {
   const issues: NamingIssue[] = [];
   const { name, brand } = spu;
 
